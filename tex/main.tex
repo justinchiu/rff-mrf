@@ -71,7 +71,8 @@ To start, consider computing the partition function of a simple example with $T=
 Z
 &= \sum_{x_1}\sum_{x_2} \psi_1(x_1, x_2) \sum_{x_3} \psi_2(x_2, x_3) \\
 &\approx \sum_{x_1}\sum_{x_2} \phi(\bx_1)^T\phi(\bx_2) \sum_{x_3} \phi(\bx_2)^T\phi(\bx_3)\\
-&= \sum_{x_1} \phi(\bx_1)^T \sum_{\bx_2} \phi(\bx_2)\phi(\bx_2)^T \sum_{x_3}\phi(\bx_3).
+&= \left(\sum_{x_1} \phi(\bx_1)^T\right) \left(\sum_{\bx_2} \phi(\bx_2)\phi(\bx_2)^T\right)
+    \left(\sum_{x_3}\phi(\bx_3)\right).
 \end{aligned}
 \end{equation}
 We can precompute the sum of outer products $\sum_{\bx_2}\phi(\bx_2)\phi(\bx^T)$ independently,
