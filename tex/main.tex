@@ -1,0 +1,90 @@
+\documentclass{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+
+\usepackage{mystyle}
+\usepackage[sort,comma,numbers]{natbib}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{hyperref}
+
+\usepackage{subcaption}
+
+\title{RFF for MRFs}
+
+\begin{document}
+\maketitle
+
+The exponential kernel, $\exp(\bx^T\by)$ with $\bx,\by\in\R^n$,
+is widely used to parameterize discrete distributions.
+It can be well-approximated by Random Fourier Features
+(RFF) $\exp(\bx^T\by)\approx \phi(\bx)^T\phi(\by), \phi:\R^n\to\R^d$
+\citep{rawat2019linearizedsoftmax}.
+Importantly, this approximation is linear, and we can therefore apply
+reordering tricks based on the distributive and associative property
+to improve the efficiency of certain operations by polynomial factors.
+
+\section{Attention}
+One such operation is attention, a very popular operation used in neural networks.
+Naively, attention requires quadratic time complexity.
+However, the sampled softmax with RFF \citep{rawat2019linearizedsoftmax}
+can be applied to compute attention with linear time complexity
+\citep{choromanski2020rethinking} (and many others).
+
+\subsection{Linear attention with RFF}
+Given queries $\bq_j\in\R^n$, keys $\bk_i\in\R^n$, and values $\bv_i\in\R^n$ with $t\in[T],i\in[I]$,
+attention must compute outputs
+\begin{equation}
+o_t = \sum_i \frac{\exp(\bq_t^T\bk_i)\bv_i}{\sum_j \exp(\bq_t^T\bk_j)}.
+\end{equation}
+This requires $O(TIn)$ time to compute for all $o_t$.
+Applying the RFF approximation, we have
+\begin{equation}
+o_t \approx \sum_i \frac{(\phi(\bq_t)^T\phi(\bk_i))\bv_i}{\sum_j \phi(\bq_t)^T\phi(\bk_j)}
+= \phi(\bq_t)^T \frac{\sum_i\phi(\bk_i)\bv_i}{\sum_j \phi(\bq_t)^T\phi(\bk_j)}.
+\end{equation}
+After using the distributive and associate properties, the numerator $\sum_i\phi(\bk_i)\bv_i$
+can be computed once and shared for all queries, reducing the time complexity
+of computing all $o_t$ to $O(Td+Id)$.
+
+\paragraph{Matrix version}
+Matrix form \citep{choromanski2020rethinking} is more informative, write up later.
+Just breaks up $A$ matrix into linear decomposition,
+then applies associative property of matmul.
+
+\subsection{Approximation error}
+
+\section{Application to MRFs}
+The RFF approximations work well in unstructured distributions.
+Can we get even tighter approximations when distributions have structure?
+Does the approximation even work?
+
+\subsection{Drop-in substitution of kernel approximation}
+We start with a linear-chain MRF:
+$$p(x) \propto \prod_t \psi(x_{t-1},x_t) = \prod_t \exp(\bx_{t-1}^T\bx_t),$$
+with the embeddings of each variable $\bx_t\in\R^n$.
+As before, we approximate $\psi_t(x_{t-1}, x_t) = \exp(\bx_{t-1}^T \bx_t) \approx \phi(\bx_{t-1})^T\phi(\bx_t)$,
+with the random projection $\phi(\cdot): \R^n \to \R^d$ chosen appropriately.
+To start, consider computing the partition function of a simple example with $T=3$:
+\begin{equation}
+\begin{aligned}
+Z
+&= \sum_{x_1}\sum_{x_2} \psi_1(x_1, x_2) \sum_{x_3} \psi_2(x_2, x_3) \\
+&\approx \sum_{x_1}\sum_{x_2} \phi(\bx_1)^T\phi(\bx_2) \sum_{x_3} \phi(\bx_2)^T\phi(\bx_3)\\
+&= \sum_{x_1} \phi(\bx_1)^T \sum_{\bx_2} \phi(\bx_2)\phi(\bx_2)^T \sum_{x_3}\phi(\bx_3).
+\end{aligned}
+\end{equation}
+We can precompute the sum of outer products $\sum_{\bx_2}\phi(\bx_2)\phi(\bx^T)$
+as well as other sums independently due to associativity,
+resulting in time complexity $O(Td + \sum_t |\mcX|d^2)$.
+
+\paragraph{Matrix version}
+Probably much clearer here too.
+
+\subsection{Approximation error}
+
+
+\bibliographystyle{plainnat}
+\bibliography{bib}
+
+\end{document}

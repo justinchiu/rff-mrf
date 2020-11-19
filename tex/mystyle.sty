@@ -1,0 +1,101 @@
+\NeedsTeXFormat{LaTeX2e}
+
+\ProvidesPackage{mystyle}[preamble]
+\usepackage{comment}
+
+% Math Imports
+\usepackage{amsmath, amssymb, bm, fancyhdr, sectsty, dsfont, mathtools}
+\usepackage{booktabs}
+
+% Tikz
+\usepackage{tikz}
+\usepackage{tikz-dependency}
+\usetikzlibrary{shapes.arrows, positioning, fit, bayesnet,
+    arrows,backgrounds,patterns,matrix,calc,shadows,plotmarks,
+    shapes,positioning,automata,positioning,spy,scopes,chains,decorations,decorations.pathreplacing}
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{foreground}
+\pgfsetlayers{background,main,foreground}
+
+% Symbols
+\newcommand\ind{\protect\mathpalette{\protect\independenT}{\perp}}
+\def\independenT#1#2{\mathrel{\rlap{$#1#2$}\mkern2mu{#1#2}}}
+\newcommand\norm[1]{\left\lVert#1\right\rVert}
+\newcommand\set[1]{\left\{#1\right\}}
+
+\newcommand\RNN{\mathrm{RNN}}
+\newcommand\MLP{\mathrm{MLP}}
+\newcommand\enc{\mathrm{enc}}
+\newcommand\softmax{\mathrm{softmax}}
+
+% Distributions
+\newcommand{\Cat}{\mathrm{Cat}}
+\newcommand\Expo{\mathrm{Expo}}
+\newcommand\Bern{\mathrm{Bern}}
+\newcommand\Pois{\mathrm{Pois}}
+\newcommand\Bin{\mathrm{Bin}}
+\newcommand\Unif{\mathrm{Unif}}
+\newcommand\Betad{\mathrm{Beta}}
+\newcommand\Gammad{\mathrm{Gamma}}
+\newcommand\Geom{\mathrm{Geom}}
+\newcommand\Logd{\mathrm{Logistic}}
+
+\newcommand\E[1]{\mathbb{E}\left[#1\right]}
+\newcommand\Es[2]{\mathbb{E}_{#1}\left[#2\right]}
+\newcommand\KL[1]{D_\mathrm{KL}\left[#1\right]}
+\newcommand{\ELBO}{\mathrm{ELBO}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\Cor}{\mathrm{Cor}}
+
+% Bold stuff
+\newcommand{\ba}{\mathbf{a}}
+\newcommand{\bb}{\mathbf{b}}
+\newcommand{\bc}{\mathbf{c}}
+\newcommand{\bd}{\mathbf{d}}
+\newcommand{\be}{\mathbf{e}}
+\newcommand{\bg}{\mathbf{g}}
+\newcommand{\bh}{\mathbf{h}}
+\newcommand{\bk}{\mathbf{k}}
+\newcommand{\br}{\mathbf{r}}
+\newcommand{\bq}{\mathbf{q}}
+\newcommand{\bv}{\mathbf{v}}
+\newcommand{\bw}{\mathbf{w}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bz}{\mathbf{z}}
+
+\newcommand{\bA}{\mathbf{A}}
+\newcommand{\bF}{\mathbf{F}}
+\newcommand{\bO}{\mathbf{O}}
+\newcommand{\bT}{\mathbf{T}}
+
+% mathcal stuff
+\newcommand{\mcB}{\mathcal{B}}
+\newcommand{\mcC}{\mathcal{C}}
+\newcommand{\mcD}{\mathcal{D}}
+\newcommand{\mcE}{\mathcal{E}}
+\newcommand{\mcI}{\mathcal{I}}
+\newcommand{\mcJ}{\mathcal{J}}
+\newcommand{\mcL}{\mathcal{L}}
+\newcommand{\mcT}{\mathcal{T}}
+\newcommand{\mcV}{\mathcal{V}}
+\newcommand{\mcX}{\mathcal{X}}
+\newcommand{\mcY}{\mathcal{Y}}
+\newcommand{\mcZ}{\mathcal{Z}}
+
+% math blackboard bold stuff
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Q}{\mathbb{Q}}
+
+% scaling variables
+\newcommand*{\Scale}[2][4]{\scalebox{#1}{\ensuremath{#2}}}
+
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\argmax}{argmax}
+
+\endinput
+

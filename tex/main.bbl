@@ -1,0 +1,24 @@
+\begin{thebibliography}{2}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Choromanski et~al.(2020)Choromanski, Likhosherstov, Dohan, Song, Gane,
+  Sarlos, Hawkins, Davis, Mohiuddin, Kaiser, Belanger, Colwell, and
+  Weller]{choromanski2020rethinking}
+Krzysztof Choromanski, Valerii Likhosherstov, David Dohan, Xingyou Song,
+  Andreea Gane, Tamas Sarlos, Peter Hawkins, Jared Davis, Afroz Mohiuddin,
+  Lukasz Kaiser, David Belanger, Lucy Colwell, and Adrian Weller.
+\newblock Rethinking attention with performers, 2020.
+
+\bibitem[Rawat et~al.(2019)Rawat, Chen, Yu, Suresh, and
+  Kumar]{rawat2019linearizedsoftmax}
+Ankit~Singh Rawat, Jiecao Chen, Felix~X. Yu, Ananda~Theertha Suresh, and Sanjiv
+  Kumar.
+\newblock Sampled softmax with random fourier features.
+\newblock \emph{CoRR}, abs/1907.10747, 2019.
+\newblock URL \url{http://arxiv.org/abs/1907.10747}.
+
+\end{thebibliography}
