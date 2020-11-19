@@ -1,12 +1,12 @@
 # Fdb version 3
-["bibtex main"] 1605810689 "main.aux" "main.bbl" "main" 1605816871
+["bibtex main"] 1605810689 "main.aux" "main.bbl" "main" 1605817712
   "/usr/local/texlive/2018/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1480098435 26816 ffe5423d2019860bad9f54bc402fac15 ""
   "bib.bib" 1605807254 1089 e52e209200bda8133636bd04cd3e584c ""
-  "main.aux" 1605816867 1903 df1028860c644d85d254feb520614cf2 ""
+  "main.aux" 1605817712 1903 df1028860c644d85d254feb520614cf2 ""
   (generated)
-  "main.blg"
   "main.bbl"
-["pdflatex"] 1605816867 "main.tex" "main.pdf" "main" 1605816871
+  "main.blg"
+["pdflatex"] 1605817712 "main.tex" "main.pdf" "main" 1605817712
   "/usr/local/texlive/2018/texmf-dist/fonts/map/fontname/texfonts.map" 1511824771 3332 103109f5612ad95229751940c61aada0 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmbsy5.tfm" 1480098698 1120 1e8878807317373affa7f7bba4cf2f6a ""
   "/usr/local/texlive/2018/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmbsy6.tfm" 1480098698 1124 14ccf5552bc7f77ca02a8a402bea8bfb ""
@@ -222,13 +222,13 @@
   "/usr/local/texlive/2018/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1526780433 2803735 8410db0ed74a2504fc3708922651cf03 ""
   "/usr/local/texlive/2018/texmf-var/web2c/pdftex/pdflatex.fmt" 1526780453 4219895 d646d013bf99294ff1d974bf7a525ca5 ""
   "/usr/local/texlive/2018/texmf.cnf" 1526780430 455 5b996dcaa0eb4ef14a83b026bc0a008c ""
-  "main.aux" 1605816867 1903 df1028860c644d85d254feb520614cf2 ""
+  "main.aux" 1605817712 1903 df1028860c644d85d254feb520614cf2 ""
   "main.bbl" 1605810689 1066 81b3cbc9bd1e050e2f147318fffa4cdf "bibtex main"
-  "main.out" 1605816867 401 65ae85950592296057d0dba70d166471 ""
-  "main.tex" 1605816869 3625 c81f558f6288dc7cbf4d48cc20383512 ""
+  "main.out" 1605817712 401 65ae85950592296057d0dba70d166471 ""
+  "main.tex" 1605817710 3761 ecf37e13d33ea95bc6efc7faf30b34a8 ""
   "mystyle.sty" 1605807498 2836 61f22487c737cf35887338123674d08b ""
   (generated)
+  "main.aux"
+  "main.out"
   "main.log"
   "main.pdf"
-  "main.out"
-  "main.aux"

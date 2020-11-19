@@ -63,7 +63,8 @@ Does the approximation even work?
 We start with a linear-chain MRF:
 $$p(x) \propto \prod_t \psi(x_{t-1},x_t) = \prod_t \exp(\bx_{t-1}^T\bx_t),$$
 with the variables $x_t\in\mcX$ and embeddings $\bx_t\in\R^n$.
-As before, we approximate $\psi_t(x_{t-1}, x_t) = \exp(\bx_{t-1}^T \bx_t) \approx \phi(\bx_{t-1})^T\phi(\bx_t)$,
+As before, we approximate
+$\psi_t(x_{t-1}, x_t) = \exp(\bx_{t-1}^T \bx_t) \approx \phi(\bx_{t-1})^T\phi(\bx_t)$,
 with the random projection $\phi(\cdot): \R^n \to \R^d$ chosen appropriately.
 To start, consider computing the partition function of a simple example with $T=3$:
 \begin{equation}
@@ -78,6 +79,8 @@ Z
 We can precompute the sum of outer products $\sum_{\bx_2}\phi(\bx_2)\phi(\bx^T)$ independently,
 resulting in time complexity $O(Td^2 + T|\mcX|d^2)$ in serial,
 and $O(Td^2 + |\mcX|d^2)$ if the sums of outer products can be computed in parallel.
+Furthermore, we can apply a divide-and-conquer approach to further
+reduce time to $O(d^2(\log T + \log |\mcX|))$ on a parallel machine.
 
 \paragraph{Matrix version}
 Probably much clearer here too.
