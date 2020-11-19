@@ -45,7 +45,7 @@ o_t \approx \sum_i \frac{(\phi(\bq_t)^T\phi(\bk_i))\bv_i^T}{\sum_j \phi(\bq_t)^T
 \end{equation}
 After using the distributive and associate properties, the numerator $\sum_i\phi(\bk_i)\bv_i$
 can be computed once and shared for all queries, reducing the time complexity
-of computing all $o_t$ to $O(Td+Id)$.
+of computing all $o_t$ to $O(Td+Id^2)$.
 
 \paragraph{Matrix version}
 Matrix form \citep{choromanski2020rethinking} is more informative, write up later.
