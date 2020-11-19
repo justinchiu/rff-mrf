@@ -35,13 +35,13 @@ can be applied to compute attention with linear time complexity
 Given queries $\bq_j\in\R^n$, keys $\bk_i\in\R^n$, and values $\bv_i\in\R^n$ with $t\in[T],i\in[I]$,
 attention must compute outputs
 \begin{equation}
-o_t = \sum_i \frac{\exp(\bq_t^T\bk_i)\bv_i}{\sum_j \exp(\bq_t^T\bk_j)}.
+o_t = \sum_i \frac{\exp(\bq_t^T\bk_i)\bv_i^T}{\sum_j \exp(\bq_t^T\bk_j)}.
 \end{equation}
 This requires $O(TIn)$ time to compute for all $o_t$.
 Applying the RFF approximation, we have
 \begin{equation}
-o_t \approx \sum_i \frac{(\phi(\bq_t)^T\phi(\bk_i))\bv_i}{\sum_j \phi(\bq_t)^T\phi(\bk_j)}
-= \phi(\bq_t)^T \frac{\sum_i\phi(\bk_i)\bv_i}{\sum_j \phi(\bq_t)^T\phi(\bk_j)}.
+o_t \approx \sum_i \frac{(\phi(\bq_t)^T\phi(\bk_i))\bv_i^T}{\sum_j \phi(\bq_t)^T\phi(\bk_j)}
+= \phi(\bq_t)^T \frac{\sum_i\phi(\bk_i)\bv_i^T}{\sum_j \phi(\bq_t)^T\phi(\bk_j)}.
 \end{equation}
 After using the distributive and associate properties, the numerator $\sum_i\phi(\bk_i)\bv_i$
 can be computed once and shared for all queries, reducing the time complexity
