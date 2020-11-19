@@ -74,8 +74,7 @@ Z
 &= \sum_{x_1} \phi(\bx_1)^T \sum_{\bx_2} \phi(\bx_2)\phi(\bx_2)^T \sum_{x_3}\phi(\bx_3).
 \end{aligned}
 \end{equation}
-We can precompute the sum of outer products $\sum_{\bx_2}\phi(\bx_2)\phi(\bx^T)$
-as well as other sums independently due to associativity,
+We can precompute the sum of outer products $\sum_{\bx_2}\phi(\bx_2)\phi(\bx^T)$ independently,
 resulting in time complexity $O(Td + T|\mcX|d^2)$ in serial,
 and $O(Td + |\mcX|d^2)$ if the sums of outer products can be computed in parallel.
 
