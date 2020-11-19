@@ -62,7 +62,7 @@ Does the approximation even work?
 \subsection{Drop-in substitution of kernel approximation}
 We start with a linear-chain MRF:
 $$p(x) \propto \prod_t \psi(x_{t-1},x_t) = \prod_t \exp(\bx_{t-1}^T\bx_t),$$
-with the embeddings of each variable $\bx_t\in\R^n$.
+with the variables $x_t\in\mcX$ and embeddings $\bx_t\in\R^n$.
 As before, we approximate $\psi_t(x_{t-1}, x_t) = \exp(\bx_{t-1}^T \bx_t) \approx \phi(\bx_{t-1})^T\phi(\bx_t)$,
 with the random projection $\phi(\cdot): \R^n \to \R^d$ chosen appropriately.
 To start, consider computing the partition function of a simple example with $T=3$:
