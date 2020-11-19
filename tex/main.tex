@@ -75,8 +75,8 @@ Z
 \end{aligned}
 \end{equation}
 We can precompute the sum of outer products $\sum_{\bx_2}\phi(\bx_2)\phi(\bx^T)$ independently,
-resulting in time complexity $O(Td + T|\mcX|d^2)$ in serial,
-and $O(Td + |\mcX|d^2)$ if the sums of outer products can be computed in parallel.
+resulting in time complexity $O(Td^2 + T|\mcX|d^2)$ in serial,
+and $O(Td^2 + |\mcX|d^2)$ if the sums of outer products can be computed in parallel.
 
 \paragraph{Matrix version}
 Probably much clearer here too.
