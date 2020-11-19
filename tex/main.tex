@@ -76,7 +76,8 @@ Z
 \end{equation}
 We can precompute the sum of outer products $\sum_{\bx_2}\phi(\bx_2)\phi(\bx^T)$
 as well as other sums independently due to associativity,
-resulting in time complexity $O(Td + \sum_t |\mcX|d^2)$.
+resulting in time complexity $O(Td + T|\mcX|d^2)$ in serial,
+and $O(Td + |\mcX|d^2)$ if the sums of outer products can be computed in parallel.
 
 \paragraph{Matrix version}
 Probably much clearer here too.
