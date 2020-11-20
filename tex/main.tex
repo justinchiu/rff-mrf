@@ -8,6 +8,9 @@
 \usepackage[noend]{algpseudocode}
 \usepackage{hyperref}
 
+\usepackage{tikz}
+\usetikzlibrary{bayesnet}
+
 \usepackage{subcaption}
 
 \title{Random Fourier Features for Scaling Markov Random Fields}
@@ -32,7 +35,8 @@ One such operation is attention, a popular operation used in neural networks.
 Naively, attention requires quadratic time complexity.
 However, the sampled softmax with RFF \citep{rawat2019linearizedsoftmax}
 can be applied to compute attention with linear time complexity
-\citep{choromanski2020rethinking} (and many others).
+\citep{choromanski2020rethinking}
+(and many others, such as Random Feature Attention, LinFormers, etc.).
 
 \subsection{Linear attention with RFF}
 Given queries $\bq_j\in\R^n$, keys $\bk_i\in\R^n$, and values $\bv_i\in\R^n$ with $t\in[T],i\in[I]$,
@@ -69,7 +73,25 @@ with the variables $x_t\in\mcX$ and embeddings $\bx_t\in\R^n$.
 As before, we approximate
 $\psi_t(x_{t-1}, x_t) = \exp(\bx_{t-1}^T \bx_t) \approx \phi(\bx_{t-1})^T\phi(\bx_t)$,
 with the random projection $\phi(\cdot): \R^n \to \R^d$ chosen appropriately.
-To start, consider computing the partition function of a simple example with $T=3$:
+To start, consider computing the partition function of a simple example with $T=3$
+in Figure~\ref{fig:linear-chain}.
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\node[latent] (x1) {$x_1$};
+\node[latent, right=of x1] (x2) {$x_2$};
+\node[latent, right=of x2] (x3) {$x_3$};
+\factor[right=of x1] {f1} {$\psi(x_1,x_2)$} {} {};
+\factor[right=of x2] {f2} {$\psi(x_2,x_3)$} {} {};
+\factoredge {x1,x2} {f1} {};
+\factoredge {x2,x3} {f2} {};
+\end{tikzpicture}
+\caption{
+\label{fig:linear-chain}
+}
+\end{figure}
+
+We compute the partition function as follows:
 \begin{equation}
 \begin{aligned}
 Z
@@ -83,7 +105,8 @@ We can precompute the sum of outer products $\sum_{\bx_2}\phi(\bx_2)\phi(\bx^T)$
 resulting in time complexity $O(Td^2 + T|\mcX|d^2)$ in serial,
 and $O(Td^2 + |\mcX|d^2)$ if the sums of outer products can be computed in parallel.
 We can also apply a divide-and-conquer approach to further
-reduce time to $O(d^2(\log T + \log |\mcX|))$ on a parallel machine.
+reduce time to $O(c_{\textrm{mm}}(\log T + \log |\mcX|))$ on a parallel machine,
+where $c_{\textrm{mm}}$ is the cost of a matrix multiplication.
 
 \paragraph{Matrix version}
 Probably much clearer here too.
