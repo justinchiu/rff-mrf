@@ -10,7 +10,7 @@
 
 \usepackage{subcaption}
 
-\title{RFF for MRFs}
+\title{Random Fourier Features for Scaling Markov Random Fields}
 
 \begin{document}
 \maketitle
@@ -18,9 +18,12 @@
 The exponential kernel, $\exp(\bx^T\by)$ with $\bx,\by\in\R^n$,
 is widely used to parameterize discrete distributions.
 It can be well-approximated by Random Fourier Features
-(RFF) $\exp(\bx^T\by)\approx \phi(\bx)^T\phi(\by), \phi:\R^n\to\R^d$
-\citep{rawat2019linearizedsoftmax}.
-Importantly, this approximation is linear, and we can therefore apply
+(RFF):
+\begin{equation}
+\exp(\bx^T\by)\approx \phi(\bx)^T\phi(\by),
+\end{equation}
+with random projections $\phi:\R^n\to\R^d$ \citep{rawat2019linearizedsoftmax}.
+Importantly, this approximation is linear, and therefore admits
 reordering tricks based on the distributive and associative property
 to improve the efficiency of certain operations by polynomial factors.
 
