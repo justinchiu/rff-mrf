@@ -25,7 +25,7 @@ reordering tricks based on the distributive and associative property
 to improve the efficiency of certain operations by polynomial factors.
 
 \section{Attention}
-One such operation is attention, a very popular operation used in neural networks.
+One such operation is attention, a popular operation used in neural networks.
 Naively, attention requires quadratic time complexity.
 However, the sampled softmax with RFF \citep{rawat2019linearizedsoftmax}
 can be applied to compute attention with linear time complexity
@@ -33,19 +33,18 @@ can be applied to compute attention with linear time complexity
 
 \subsection{Linear attention with RFF}
 Given queries $\bq_j\in\R^n$, keys $\bk_i\in\R^n$, and values $\bv_i\in\R^n$ with $t\in[T],i\in[I]$,
-attention must compute outputs
+attention computes outputs
 \begin{equation}
 o_t = \sum_i \frac{\exp(\bq_t^T\bk_i)\bv_i^T}{\sum_j \exp(\bq_t^T\bk_j)}.
 \end{equation}
 This requires $O(TIn)$ time to compute for all $o_t$.
 Applying the RFF approximation, we have
 \begin{equation}
-o_t \approx \sum_i \frac{(\phi(\bq_t)^T\phi(\bk_i))\bv_i^T}{\sum_j \phi(\bq_t)^T\phi(\bk_j)}
-= \phi(\bq_t)^T \frac{\sum_i\phi(\bk_i)\bv_i^T}{\sum_j \phi(\bq_t)^T\phi(\bk_j)}.
+o_t \approx \sum_i \frac{(\phi(\bq_t)^T\phi(\bk_i))\bv_i^T}{\sum_j\phi(\bq_t)^T\phi(\bk_j)}
+= \frac{\phi(\bq_t)^T\sum_i\phi(\bk_i)\bv_i^T}{\phi(\bq_t)^T\sum_j\phi(\bk_j)}.
 \end{equation}
-After using the distributive and associate properties, the numerator $\sum_i\phi(\bk_i)\bv_i$
-can be computed once and shared for all queries, reducing the time complexity
-of computing all $o_t$ to $O(Td+Id^2)$.
+The terms $\sum_i\phi(\bk_i)\bv_i^T$ and $\sum_j\phi(\bk_j)$ can be computed once for all queries,
+reducing the time complexity of computing all $o_t$ to $O(Td+Id^2)$.
 
 \paragraph{Matrix version}
 Matrix form \citep{choromanski2020rethinking} is more informative, write up later.
@@ -53,6 +52,7 @@ Just breaks up $A$ matrix into linear decomposition,
 then applies associative property of matmul.
 
 \subsection{Approximation error}
+todo
 
 \section{Application to MRFs}
 The RFF approximations work well in unstructured distributions.
@@ -84,9 +84,16 @@ reduce time to $O(d^2(\log T + \log |\mcX|))$ on a parallel machine.
 
 \paragraph{Matrix version}
 Probably much clearer here too.
+todo
 
 \subsection{Approximation error}
+todo
 
+\section{Application to PCFGs}
+todo
+
+\subsection{Approximation error}
+todo
 
 \bibliographystyle{plainnat}
 \bibliography{bib}
