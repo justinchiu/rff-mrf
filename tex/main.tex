@@ -70,11 +70,6 @@ Does the approximation even work?
 We start with a linear-chain MRF:
 $$p(x) \propto \prod_t \psi(x_{t-1},x_t) = \prod_t \exp(\bx_{t-1}^T\bx_t),$$
 with the variables $x_t\in\mcX$ and embeddings $\bx_t\in\R^n$.
-As before, we approximate
-$\psi_t(x_{t-1}, x_t) = \exp(\bx_{t-1}^T \bx_t) \approx \phi(\bx_{t-1})^T\phi(\bx_t)$,
-with the random projection $\phi(\cdot): \R^n \to \R^d$ chosen appropriately.
-To start, consider computing the partition function of a simple example with $T=3$
-in Figure~\ref{fig:linear-chain}.
 \begin{figure}[h]
 \centering
 \begin{tikzpicture}
@@ -90,8 +85,10 @@ in Figure~\ref{fig:linear-chain}.
 \label{fig:linear-chain}
 }
 \end{figure}
-
-We compute the partition function as follows:
+As before, we approximate
+$\psi_t(x_{t-1}, x_t) = \exp(\bx_{t-1}^T \bx_t) \approx \phi(\bx_{t-1})^T\phi(\bx_t)$,
+with the random projection $\phi(\cdot): \R^n \to \R^d$ chosen appropriately.
+To start, consider computing the partition function of a simple example with $T=3$:
 \begin{equation}
 \begin{aligned}
 Z
