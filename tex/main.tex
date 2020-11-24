@@ -61,7 +61,7 @@ then applies associative property of matmul.
 \subsection{Approximation error}
 todo
 
-\section{Application to MRFs}
+\section{Linear Chain MRFs}
 The RFF approximations work well in unstructured distributions.
 Can we get even tighter approximations when distributions have structure?
 Does the approximation even work?
@@ -70,6 +70,7 @@ Does the approximation even work?
 We start with a linear-chain MRF:
 $$p(x) \propto \prod_t \psi(x_{t-1},x_t) = \prod_t \exp(\bx_{t-1}^T\bx_t),$$
 with the variables $x_t\in\mcX$ and embeddings $\bx_t\in\R^n$.
+\begin{comment}
 \begin{figure}[h]
 \centering
 \begin{tikzpicture}
@@ -85,6 +86,7 @@ with the variables $x_t\in\mcX$ and embeddings $\bx_t\in\R^n$.
 \label{fig:linear-chain}
 }
 \end{figure}
+\end{comment}
 As before, we approximate
 $\psi_t(x_{t-1}, x_t) = \exp(\bx_{t-1}^T \bx_t) \approx \phi(\bx_{t-1})^T\phi(\bx_t)$,
 with the random projection $\phi(\cdot): \R^n \to \R^d$ chosen appropriately.
@@ -104,6 +106,8 @@ and $O(Td^2 + |\mcX|d^2)$ if the sums of outer products can be computed in paral
 We can also apply a divide-and-conquer approach to further
 reduce time to $O(c_{\textrm{mm}}(\log T + \log |\mcX|))$ on a parallel machine,
 where $c_{\textrm{mm}}$ is the cost of a matrix multiplication.
+Compared to the original time complexity of $O(T|\mcX|^2)$,
+this is particularly beneficial if $d \ll |\mcX|$.
 
 \paragraph{Matrix version}
 Probably much clearer here too.
@@ -111,6 +115,20 @@ todo
 
 \subsection{Approximation error}
 todo
+
+\section{Tree MRFs}
+We proceed from first order linear-chain MRFs, where nodes only have 2 neighbours,
+to the next simplest model: trees.
+With tree MRFs, nodes may have more than 2 neighbours depending on the arity of the tree,
+but the dependencies are still simple and exact inference is tractable.
+
+\subsection{The distributive property of dot product is not enough}
+
+\subsection{Approximation error}
+
+\paragraph{Tensor version}
+
+\subsection{Approximation error}
 
 \section{Application to PCFGs}
 todo

@@ -1,12 +1,12 @@
 # Fdb version 3
-["bibtex main"] 1605892629 "main.aux" "main.bbl" "main" 1605892629
+["bibtex main"] 1606159503 "main.aux" "main.bbl" "main" 1606159514
   "/usr/local/texlive/2018/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1480098435 26816 ffe5423d2019860bad9f54bc402fac15 ""
   "bib.bib" 1605807254 1089 e52e209200bda8133636bd04cd3e584c ""
-  "main.aux" 1605892629 2331 6be9576d2da5eff0c71ee7618a00ff38 ""
+  "main.aux" 1606159514 2579 2cddd6019df291a498ea70047868586b ""
   (generated)
-  "main.bbl"
   "main.blg"
-["pdflatex"] 1605892629 "main.tex" "main.pdf" "main" 1605892629
+  "main.bbl"
+["pdflatex"] 1606159513 "main.tex" "main.pdf" "main" 1606159514
   "/usr/local/texlive/2018/texmf-dist/fonts/map/fontname/texfonts.map" 1511824771 3332 103109f5612ad95229751940c61aada0 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmbsy5.tfm" 1480098698 1120 1e8878807317373affa7f7bba4cf2f6a ""
   "/usr/local/texlive/2018/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmbsy6.tfm" 1480098698 1124 14ccf5552bc7f77ca02a8a402bea8bfb ""
@@ -51,14 +51,11 @@
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb" 1480098733 30251 6afa5cb1d0204815a708a080681d4674 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb" 1480098733 36299 5f9df58c2139e7edcf37c8fca4bd384d ""
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb" 1480098733 36281 c355509802a035cadc5f15869451dcee ""
-  "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb" 1480098733 35469 70d41d2b9ea31d5d813066df7c99281c ""
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb" 1480098733 35752 024fb6c41858982481f6968b5fc26508 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb" 1480098733 32722 d7379af29a190c3f453aba36302ff5a9 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb" 1480098733 32362 179c33bbf43f19adbb3825bb4e36e57a ""
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb" 1480098733 31809 8670ca339bf94e56da1fc21c80635e2a ""
-  "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb" 1480098733 32734 69e00a6b65cedb993666e42eedb3d48f ""
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb" 1480098733 32762 224316ccc9ad3ca0423a14971cfa7fc1 ""
-  "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb" 1480098733 32726 0a1aea6fcd6468ee2cf64d891f5c43c8 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb" 1480098733 32569 5e5ddc8df908dea60932f3c484a54c0d ""
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb" 1480098733 32716 08e384dc442464e7285e891af9f45947 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb" 1480098733 37944 359e864bd06cde3b1cf57bb20757fb06 ""
@@ -224,14 +221,14 @@
   "/usr/local/texlive/2018/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1526780433 2803735 8410db0ed74a2504fc3708922651cf03 ""
   "/usr/local/texlive/2018/texmf-var/web2c/pdftex/pdflatex.fmt" 1526780453 4219895 d646d013bf99294ff1d974bf7a525ca5 ""
   "/usr/local/texlive/2018/texmf.cnf" 1526780430 455 5b996dcaa0eb4ef14a83b026bc0a008c ""
-  "main.aux" 1605892629 2331 6be9576d2da5eff0c71ee7618a00ff38 ""
-  "main.bbl" 1605892629 1066 81b3cbc9bd1e050e2f147318fffa4cdf "bibtex main"
-  "main.out" 1605892629 524 fe2505c27be763d3ceaded44ba5bff5c ""
-  "main.tex" 1605892616 4450 b8a8fbbcf11b2b51a75b346338f8ba8b ""
+  "main.aux" 1606159514 2579 2cddd6019df291a498ea70047868586b ""
+  "main.bbl" 1606159503 1066 81b3cbc9bd1e050e2f147318fffa4cdf "bibtex main"
+  "main.out" 1606159514 793 16c1b10abb35de9fee755283a9f58571 ""
+  "main.tex" 1606159509 5037 30f68eb7851a84f20deb43767227f692 ""
   "mystyle.sty" 1605807498 2836 61f22487c737cf35887338123674d08b ""
   "tikzlibrarybayesnet.code.tex" 1605891263 3902 7facbbda600b60db4f4682e423a26755 ""
   (generated)
-  "main.pdf"
   "main.out"
-  "main.aux"
   "main.log"
+  "main.pdf"
+  "main.aux"
