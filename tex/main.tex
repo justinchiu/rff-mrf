@@ -106,7 +106,7 @@ resulting in time complexity $O(Td^2 + T|\mcX|d^2)$ in serial,
 and $O(Td^2 + |\mcX|d^2)$ if the sums of outer products can be computed in parallel.
 We can also apply a divide-and-conquer approach to further
 reduce time to $O(c_{\textrm{mm}}(\log T + \log |\mcX|))$ on a parallel machine,
-where $c_{\textrm{mm}}$ is the cost of a matrix multiplication.
+where $c_{\textrm{mm}}(d)$ is the cost of a matrix multiplication which is polynomial in $d$.
 Compared to the original time complexity of $O(T|\mcX|^2)$,
 this is particularly beneficial if $d \ll |\mcX|$.
 
