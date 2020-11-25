@@ -1,2 +1,6 @@
 *.aux
 *.log
+*.fls
+*.out
+*.blg
+*.fdb_latexmk
