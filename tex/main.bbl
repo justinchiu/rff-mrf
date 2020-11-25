@@ -1,4 +1,4 @@
-\begin{thebibliography}{2}
+\begin{thebibliography}{3}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -12,6 +12,13 @@ Krzysztof Choromanski, Valerii Likhosherstov, David Dohan, Xingyou Song,
   Andreea Gane, Tamas Sarlos, Peter Hawkins, Jared Davis, Afroz Mohiuddin,
   Lukasz Kaiser, David Belanger, Lucy Colwell, and Adrian Weller.
 \newblock Rethinking attention with performers, 2020.
+
+\bibitem[Obermeyer et~al.(2019)Obermeyer, Bingham, Jankowiak, Chiu, Pradhan,
+  Rush, and Goodman]{obermeyer2019tve}
+F.~Obermeyer, Eli Bingham, M.~Jankowiak, Justin~T Chiu, Neeraj Pradhan,
+  Alexander~M. Rush, and Noah~D. Goodman.
+\newblock Tensor variable elimination for plated factor graphs.
+\newblock \emph{ArXiv}, abs/1902.03210, 2019.
 
 \bibitem[Rawat et~al.(2019)Rawat, Chen, Yu, Suresh, and
   Kumar]{rawat2019linearizedsoftmax}

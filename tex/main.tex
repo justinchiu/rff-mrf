@@ -7,6 +7,7 @@
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
 \usepackage{hyperref}
+\usepackage{todonotes}
 
 \usepackage{tikz}
 \usetikzlibrary{bayesnet}
@@ -122,13 +123,65 @@ to the next simplest model: trees.
 With tree MRFs, nodes may have more than 2 neighbours depending on the arity of the tree,
 but the dependencies are still simple and exact inference is tractable.
 
-\subsection{The distributive property of dot product is not enough}
+In linear-chain MRFs all elimination orders are equivalent, as the elimination 
+of a variable cannot result in the addition of any fill-in edges.
+Indeed, this is the reason why divide-and-conquer strategies are possible
+in the first place.
+As this is not the case for tree MRFs (consider removing a node in the middle of a tree),
+it may not be possible to apply the distributive property in order to
+improve the time complexity of variable elimination.
+\todo{Hypothesis: Prove the (insert name) parallelism can only be obtained
+when parallel elimination orderings are possible?}
+However, it may be still be possible to obtain speedups through parallelization. 
+
+\subsection{Distributive law failure}
+We first demonstrate that, in a very simple tree MRF,
+the linearization trick does not result in the same speedups as the linear-chain MRF.
+Consider a star MRF with the following joint distribution:
+\begin{equation}
+p(x) \propto \psi(x_1, x_2) \psi(x_2, x_3) \psi(x_2, x_4),
+\end{equation}
+shown in Figure~\ref{fig:star-mrf}.
+\begin{figure}[htb!]
+\centering
+\begin{tikzpicture}
+\node[latent] (x1) {$x_1$};
+\node[latent, right=of x1] (x2) {$x_2$};
+\node[latent, right=of x2] (x3) {$x_3$};
+\node[latent, below=of x2] (x4) {$x_4$};
+\factor[right=of x1] {f1} {$\psi(x_1,x_2)$} {} {};
+\factor[right=of x2] {f2} {$\psi(x_2,x_3)$} {} {};
+\factor[below=of x2] {f3} {$\psi(x_2,x_4)$} {} {};
+\factoredge {x1,x2} {f1} {};
+\factoredge {x2,x3} {f2} {};
+\factoredge {x2,x4} {f3} {};
+\end{tikzpicture}
+\caption{
+\label{fig:star-mrf}
+}
+\end{figure}
+Elimination takes time $O(V|\mcX|^2)$, where $V$ is the number of nodes.
+The time complexity can be lowered on a parallel device to $O(|\mcX|^2)$
+using tensor variable elimination \citep{obermeyer2019tve}.
+
+Applying the RFF approximation, elimination is then given by
+\begin{equation}
+\begin{aligned}
+Z &= \sum_\bz \psi(x_1, x_2) \psi(x_2, x_3) \psi(x_2, x_4) \\
+&\approx \sum_{x_1} \sum_{x_2} \phi(x_1)^T\phi(x_2)
+    \sum_{x_3} \phi(x_2)^T\phi(x_3) \sum_{x_4} \phi(x_2)^T\phi(x_4)\\
+&= \sum_{x_1} \phi(x_1)^T \sum_{x_2} \phi(x_2)
+    \left(\phi(x_2)^T \sum_{x_3} \phi(x_3)\right)
+    \left(\phi(x_2)^T\sum_{x_4} \phi(x_4)\right).
+\end{aligned}
+\end{equation}
+
 
 \subsection{Approximation error}
 
-\paragraph{Tensor version}
+\paragraph{Tensor version?}
 
-\subsection{Approximation error}
+\subsection{Comparison to Bethe Free Energy?}
 
 \section{Application to PCFGs}
 todo
