@@ -31,8 +31,12 @@ w = np.random.randn(3, 5)
 naive = np.einsum("xi,yi,yj,zj,yk,wk->",x,y,y,z,y,w)
 naive2 = x.dot((y * y.dot(z.sum(0))[:,None] * y.dot(w.sum(0))[:,None]).sum(0)).sum()
 
+# do sums in parallel
 Y = np.einsum("yi,yj,yk->ijk",y,y,y)
-yxzw = np.einsum("ijk,xi,zj,wk->",Y,x,z,w)
+X = x.sum(0)
+Z = z.sum(0)
+W = w.sum(0)
+yxzw = np.einsum("ijk,i,j,k->",Y,X,Z,W)
 
 # broken with batching
 Yo = outer(outer(y,y), y)
