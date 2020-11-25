@@ -182,9 +182,9 @@ Z \approx \left(\sum_{x_1} \phi(x_1)^T \right)
 \end{equation}
 where this approximation can be computed in time $O(|\mcX|d^3)$.
 
-Generalizing to $n$-arity trees, we can go from the original runtime of $O(V|\mcX|^2)$
-for variable elimination to $O(Vd^2 + |\mcX|d^n)$ by applying the
-RFF approximation and reordering contraction.
+Generalizing to $n$-arity trees, we can go from the original runtime of $O(E|\mcX|^2)$
+for variable elimination to $O(Ed^2 + |\mcX|d^n)$ by applying the
+RFF approximation and reordering contraction, where $E$ is the number of edges.
 
 \subsection{Approximation error}
 
