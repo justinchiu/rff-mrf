@@ -1,12 +1,12 @@
 # Fdb version 3
-["bibtex main"] 1606282749 "main.aux" "main.bbl" "main" 1606282750
+["bibtex main"] 1606326813 "main.aux" "main.bbl" "main" 1606326821
   "/usr/local/texlive/2018/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1480098435 26816 ffe5423d2019860bad9f54bc402fac15 ""
   "bib.bib" 1606274126 1380 531808d985c317afe38e5df4173ce75d ""
-  "main.aux" 1606282749 3266 a33ba4b1c258337c24d303e83598b476 ""
+  "main.aux" 1606326814 3184 0a9623b33180add792cfd0ec4fb42b1c ""
   (generated)
-  "main.bbl"
   "main.blg"
-["pdflatex"] 1606282749 "main.tex" "main.pdf" "main" 1606282750
+  "main.bbl"
+["pdflatex"] 1606326813 "main.tex" "main.pdf" "main" 1606326821
   "/usr/local/texlive/2018/texmf-dist/fonts/map/fontname/texfonts.map" 1511824771 3332 103109f5612ad95229751940c61aada0 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmbsy5.tfm" 1480098698 1120 1e8878807317373affa7f7bba4cf2f6a ""
   "/usr/local/texlive/2018/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmbsy6.tfm" 1480098698 1124 14ccf5552bc7f77ca02a8a402bea8bfb ""
@@ -228,14 +228,14 @@
   "/usr/local/texlive/2018/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1526780433 2803735 8410db0ed74a2504fc3708922651cf03 ""
   "/usr/local/texlive/2018/texmf-var/web2c/pdftex/pdflatex.fmt" 1526780453 4219895 d646d013bf99294ff1d974bf7a525ca5 ""
   "/usr/local/texlive/2018/texmf.cnf" 1526780430 455 5b996dcaa0eb4ef14a83b026bc0a008c ""
-  "main.aux" 1606282749 3266 a33ba4b1c258337c24d303e83598b476 ""
-  "main.bbl" 1606282749 1407 26f0ef7764d59dc290cf5f0d2b6cb2ac "bibtex main"
-  "main.out" 1606282749 791 79089ea34b1449f200f5b90eca69bb33 ""
-  "main.tex" 1606282747 7219 ee5812f74c6e65fc6707a45543b84682 ""
+  "main.aux" 1606326814 3184 0a9623b33180add792cfd0ec4fb42b1c ""
+  "main.bbl" 1606326813 1407 26f0ef7764d59dc290cf5f0d2b6cb2ac "bibtex main"
+  "main.out" 1606326814 808 19a41b01a033d31af26c933b71ec960f ""
+  "main.tex" 1606326811 7563 e1edc92e4202676ccde144e519ad4807 ""
   "mystyle.sty" 1605807498 2836 61f22487c737cf35887338123674d08b ""
   "tikzlibrarybayesnet.code.tex" 1605891263 3902 7facbbda600b60db4f4682e423a26755 ""
   (generated)
-  "main.log"
-  "main.aux"
   "main.out"
+  "main.log"
   "main.pdf"
+  "main.aux"

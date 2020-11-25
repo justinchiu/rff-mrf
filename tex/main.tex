@@ -130,13 +130,9 @@ in the first place.
 As this is not the case for tree MRFs (consider removing a node in the middle of a tree),
 it may not be possible to apply the distributive property in order to
 improve the time complexity of variable elimination.
-\todo{Hypothesis: Prove the (insert name) parallelism can only be obtained
-when parallel elimination orderings are possible?}
 However, it may be still be possible to obtain speedups through parallelization. 
 
-\subsection{Distributive law failure}
-We first demonstrate that, in a very simple tree MRF,
-the linearization trick does not result in the same speedups as the linear-chain MRF.
+\subsection{RFF allows reording of tensor contraction}
 Consider a star MRF with the following joint distribution:
 \begin{equation}
 p(x) \propto \psi(x_1, x_2) \psi(x_2, x_3) \psi(x_2, x_4),
@@ -175,11 +171,23 @@ Z &= \sum_\bz \psi(x_1, x_2) \psi(x_2, x_3) \psi(x_2, x_4) \\
     \left(\phi(x_2)^T\sum_{x_4} \phi(x_4)\right).
 \end{aligned}
 \end{equation}
+We can un-distribute $\phi(x_2)^T$ from the last two terms with a tensor product:
+\begin{equation}
+Z \approx \left(\sum_{x_1} \phi(x_1)^T \right)
+\left(\sum_{x_2} \phi(x_2) \otimes\phi(x_2) \otimes \phi(x_2)  \right)
+\left(\sum_{x_3} \phi(x_3)\right) 
+\left(\sum_{x_4} \phi(x_4)\right),
+\end{equation}
+where this approximation can be computed in time $O(|\mcX|d^3)$.
 
+Generalizing to $n$-arity trees, we can go from the original runtime of $O(V|\mcX|^2)$
+for variable elimination to $O(Vd^2 + |\mcX|d^n)$ by applying the
+RFF approximation and reordering contraction.
 
 \subsection{Approximation error}
 
-\paragraph{Tensor version?}
+\paragraph{Tensor version, einsum version}
+\todo{asdf}
 
 \subsection{Comparison to Bethe Free Energy?}
 
