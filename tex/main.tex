@@ -128,9 +128,8 @@ of a variable cannot result in the addition of any fill-in edges.
 Indeed, this is the reason why divide-and-conquer strategies are possible
 in the first place.
 As this is not the case for tree MRFs (consider removing a node in the middle of a tree),
-it may not be possible to apply the distributive property in order to
-improve the time complexity of variable elimination.
-However, it may be still be possible to obtain speedups through parallelization. 
+we cannot get the same speedups as in the linear-chain MRF.
+However, speedups due to parallelization and projection are still be possible.
 
 \subsection{RFF allows reording of tensor contraction}
 Consider a star MRF with the following joint distribution:
@@ -162,6 +161,7 @@ using tensor variable elimination \citep{obermeyer2019tve}.
 
 Applying the RFF approximation, elimination is then given by
 \begin{equation}
+\label{eqn:star}
 \begin{aligned}
 Z &= \sum_\bz \psi(x_1, x_2) \psi(x_2, x_3) \psi(x_2, x_4) \\
 &\approx \sum_{x_1} \sum_{x_2} \phi(x_1)^T\phi(x_2)
@@ -172,8 +172,10 @@ Z &= \sum_\bz \psi(x_1, x_2) \psi(x_2, x_3) \psi(x_2, x_4) \\
 \end{aligned}
 \end{equation}
 We can un-distribute $\phi(x_2)^T$ from the last two terms with a tensor product:
-\todo{definitely commutative property is being used here, which is clear in the einsum version.
-not sure what to call this?}
+\todo{definitely something slightly weaker than the commutative property is being used here,
+which is clear in the einsum version.
+not sure what to call this?
+is this a generalized cyclical trace property or just the tensor analogue of polynomials}
 \begin{equation}
 Z \approx \left(\sum_{x_1} \phi(x_1)^T \right)
 \left(\sum_{x_2} \phi(x_2) \otimes\phi(x_2) \otimes \phi(x_2)  \right)
@@ -191,10 +193,61 @@ RFF approximation and reordering contraction, where $E$ is the number of edges.
 \paragraph{Tensor version, einsum version}
 \todo{asdf}
 
-\section{Application to Globally Normalized HMMs}
-todo
+\section{Application to globally normalized HMMs}
+The tree example of RFF-MRFs above extends directly to globally normalized HMMs.
+Consider an HMM with discrete observations $x_t \in \mcX$
+and discrete latent states $z_t\in\mcZ$.
+The joint distribution is given by
+\begin{equation}
+p(x,z) \propto \prod_t \psi(x_{t-1}, x_t) \psi(z_t, x_t)
+= \prod_t \exp(\bx_{t-1}, \bx_t) \exp(\bz_t, \bx_t),
+\end{equation}
+with $\bx_t,\bz_t\in\R^d$.
+The graphical model is given in Figure \ref{fig:hmm}.
+\begin{figure}[htb!]
+\centering
+\begin{tikzpicture}
+\node[latent] (z1) {$z_1$};
+\node[latent, right=of z1] (z2) {$z_2$};
+\node[latent, right=of z2] (z3) {$z_3$};
+\node[latent, below=of z1] (x1) {$x_1$};
+\node[latent, below=of z2] (x2) {$x_2$};
+\node[latent, below=of z3] (x3) {$x_3$};
+\factor[right=of z1] {f12} {$\psi(x_1,x_2)$} {} {};
+\factor[right=of z2] {f23} {$\psi(x_2,x_3)$} {} {};
+\factor[below=of z1] {g1} {$\psi(z_1,x_1)$} {} {};
+\factor[below=of z2] {g2} {$\psi(z_2,x_2)$} {} {};
+\factor[below=of z3] {g3} {$\psi(z_3,x_3)$} {} {};
+\factoredge {z1,z2} {f12} {};
+\factoredge {z2,z3} {f23} {};
+\factoredge {x1,z1} {g1} {};
+\factoredge {x2,z2} {g2} {};
+\factoredge {x3,z3} {g3} {};
+\end{tikzpicture}
+\caption{
+\label{fig:hmm}
+}
+\end{figure}
+
+To compute the partition function we perform the same computation
+as in Equation~\ref{eqn:star}:
+\begin{equation}
+\begin{aligned}
+Z &= \sum_x\sum_z \prod_t \psi(x_{t-1}, x_t)\psi(z_t, x_t)\\
+&\approx
+\left(\left(\sum_{x_1} \phi(\bx_1) \right) \left(\sum_{z_1} \phi(\bz_1)\otimes \phi(\bz_1) \right)\right)
+\left(\left(\sum_{x_2} \phi(\bx_2) \right) \left(\sum_{z_2} \phi(\bz_2)\otimes \phi(\bz_2)\otimes\phi(\bz_2) \right)\right)
+\cdots
+\end{aligned}
+\end{equation}
 
 \section{Application to PCFGs}
+todo
+
+\section{Application to MRF-LM}
+todo
+
+\section{Numerical Stability}
 todo
 
 \bibliographystyle{plainnat}
