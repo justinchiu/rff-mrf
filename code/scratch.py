@@ -22,6 +22,10 @@ A = np.einsum("i,j->ij", a, a)
 out = np.tensordot(np.tensordot(A, b, axes=1), c, axes=1)
 out2 = inner(inner(outer(a, a), b), c)
 
+# a (a^t b) (a^t c)
+o1 = inner(inner(outer(outer(a,a),a), b), c)
+o2 = np.einsum("a,i,i,j,j->a", a, a, b, a, c)
+
 x = np.random.randn(3, 5)
 y = np.random.randn(3, 5)
 z = np.random.randn(3, 5)
