@@ -26,6 +26,13 @@ out2 = inner(inner(outer(a, a), b), c)
 o1 = inner(inner(outer(outer(a,a),a), b), c)
 o2 = np.einsum("a,i,i,j,j->a", a, a, b, a, c)
 
+x = np.random.randn(5)
+y = np.random.randn(5)
+# a (x^t b) (y^t c)
+o3 = inner(inner(outer(outer(a,x),y), b), c) # wrong! order of operations (OOO) matters
+o4 = np.einsum("a,i,i,j,j->a", a, x, b, y, c)
+o5 = inner(inner(outer(outer(a,y),x), b), c)
+
 x = np.random.randn(3, 5)
 y = np.random.randn(3, 5)
 z = np.random.randn(3, 5)
