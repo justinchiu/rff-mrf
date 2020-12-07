@@ -62,6 +62,9 @@ then applies associative property of matmul.
 \subsection{Approximation error}
 todo
 
+\section{Hidden Markov Models}
+
+
 \section{Linear Chain MRFs}
 The RFF approximations work well in unstructured distributions.
 Can we get even tighter approximations when distributions have structure?
@@ -235,14 +238,18 @@ as in Equation~\ref{eqn:star}:
 \begin{aligned}
 Z &= \sum_x\sum_z \prod_t \psi(x_{t-1}, x_t)\psi(z_t, x_t)\\
 &\approx
-\left(\left(\sum_{x_1} \phi(\bx_1)^T \right) \left(\sum_{z_1} \phi(\bz_1)\otimes \phi(\bz_1) \right)\right)
-\left(\left(\sum_{x_2} \phi(\bx_2) \right) \left(\sum_{z_2} \phi(\bz_2)\otimes \phi(\bz_2)\otimes\phi(\bz_2) \right)\right)\\
+\left(\left(\sum_{x_1} \phi(\bx_1)^T \right) \left(\sum_{z_1} \phi(\bz_1)\otimes \phi(\bz_1) \right)\right)\\
+&\qquad \cdot \left(\left(\sum_{x_2} \phi(\bx_2) \right) \left(\sum_{z_2} \phi(\bz_2)\otimes \phi(\bz_2)\otimes\phi(\bz_2) \right)\right)\\
 &\qquad \cdot \left(\left(\sum_{x_3} \phi(\bx_3) \right) \left(\sum_{z_3} \phi(\bz_3)\otimes \phi(\bz_3)\otimes\phi(\bz_3) \right)\right)
 \cdots\\
 &\qquad \cdot \left(\left(\sum_{z_T} \phi(\bz_T)\otimes \phi(\bz_T) \right)\left(\sum_{x_T} \phi(\bx_T) \right) \right).
 \end{aligned}
 \end{equation}
+\todo{probably take out $x_3$}
 Again, each of the summations and summands can be computed in parallel.
+\todo{expand / finish}
+
+\section{HSMM}
 
 \section{Application to WCFGs}
 todo
