@@ -130,7 +130,7 @@ Applying the RFF approximation to sequence $x$ with $|x| = 2$, we have
 a linear-chain MRF plus some scaling terms:
 \begin{equation}
 \begin{aligned}
-p(x) &= \sum_z \prod_t p(x_t,z_t\mid z_{t-1})\\
+p(x)
 &= \sum_{z_1} p(z_1 \mid z_0)p(x_1 \mid z_1)  \sum_{z_2} p(z_2 \mid z_1)p(x_2 \mid z_2)\\
 &= \sum_{z_1} \frac{\phi(\bz_0)^T\phi(\bz_1)}{\sum_{z_1'}\phi(\bz_0)^T\phi(\bz'_1)}
 \frac{\phi(\bz_z)^T\phi(\bx_1)}{\sum_{x_1}\phi(\bz_1)^T\phi(\bx_1)}
@@ -139,11 +139,6 @@ p(x) &= \sum_z \prod_t p(x_t,z_t\mid z_{t-1})\\
 &= \sum_{z_1} \frac{\phi(\bz_0)^T\phi(\bz_1)}{\phi(\bz_0)^T\sum_{z_1'}\phi(\bz'_1)}
 \frac{\phi(\bz_1)^T\phi(\bx_1)}{\phi(\bz_1)^T\sum_{x_1}\phi(\bx_1)}
 \sum_{z_2} \frac{\phi(\bz_1)^T\phi(\bz_2)}{\phi(\bz_1)^T\sum_{z_2'}\phi(\bz_2')}
-\frac{\phi(\bz_2)^T\phi(\bx_2)}{\phi(\bz_2)^T\sum_{x_2}\phi(\bx_2)}\\
-&= \frac{\phi(\bz_0)^T}{\phi(\bz_0)^T\sum_{z_1'}\phi(\bz'_1)}\sum_{z_1} \phi(\bz_1)
-\frac{\phi(\bz_1)^T\phi(\bx_1)}{\phi(\bz_1)^T\sum_{x_1}\phi(\bx_1)}
-\frac{\phi(\bz_1)^T}{\phi(\bz_1)^T\sum_{z_2'}\phi(\bz_2')}
-\sum_{z_2} \phi(\bz_2)
 \frac{\phi(\bz_2)^T\phi(\bx_2)}{\phi(\bz_2)^T\sum_{x_2}\phi(\bx_2)}\\
 &= \left(\frac{\phi(\bz_0)^T}{\phi(\bz_0)^T\sum_{z_1'}\phi(\bz'_1)}\right)
 \left(
