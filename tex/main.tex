@@ -157,7 +157,7 @@ p(x) &= \sum_z \prod_t p(x_t,z_t\mid z_{t-1})\\
 \left(
 \sum_{z_2} 
 \frac{\left(\phi(\bz_2)^T\phi(\bx_2)\right)\phi(\bz_2)}{\phi(\bz_2)^T\sum_{x_2}\phi(\bx_2)}
-\right)
+\right).
 \end{aligned}
 \end{equation}
 
@@ -216,7 +216,7 @@ Z &= \sum_\bz \psi(x_1, x_2) \psi(x_2, x_3) \psi(x_2, x_4) \\
     \left(\phi(x_2)^T\sum_{x_4} \phi(x_4)\right).
 \end{aligned}
 \end{equation}
-We can un-distribute $\phi(x_2)^T$ from the last two terms with a tensor product:
+We can pull $\phi(x_2)^T$ from the last two terms with a tensor product:
 \todo{definitely something slightly weaker than the commutative property is being used here,
 which is clear in the einsum version.
 not sure what to call this?
