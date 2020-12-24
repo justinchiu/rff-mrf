@@ -36,6 +36,9 @@ from jax.scipy.special import logsumexp as lse
 
 import numpy as onp
 
+#onp.set_printoptions(precision=2)
+onp.set_printoptions(suppress=True, precision=2)
+
 def nonnegative_softmax_kernel_feature_creator(
     data,
     projection_matrix,
@@ -87,6 +90,9 @@ def nonnegative_softmax_kernel_feature_creator(
   diag_data = (diag_data / 2.0) * data_normalizer * data_normalizer
   diag_data = jnp.expand_dims(diag_data, axis=data.ndim - 1)
 
+  return data_dash - diag_data 
+
+  """
   if is_query:
     last_dims_t = (len(data_dash.shape) - 1,)
     data_dash = ratio * (
@@ -97,6 +103,7 @@ def nonnegative_softmax_kernel_feature_creator(
         jnp.exp(data_dash - diag_data - jnp.max(data_dash)) + eps)
 
   return data_dash
+  """
 
 class RandomMatrix(object):
   r"""Abstract class providing a method for constructing 2D random arrays.
@@ -168,21 +175,23 @@ class GaussianOrthogonalRandomMatrix(RandomMatrix):
 # tests
 def attn(q, k):
     log_pots = q @ k.T
-    return jax.nn.softmax(log_pots)
+    return jax.nn.softmax(log_pots), log_pots
+
+lmm = jax.jit(lambda x,y: lse(x[:,None,:] + y[None,:,:], -1))
 
 def rff_attn(q, k, projection_matrix):
     kernel_cons = nonnegative_softmax_kernel_feature_creator
-    phi_q = kernel_cons(q, projection_matrix, None, (0,), None, is_query=True, eps=0, normalize_data=False)
-    phi_k = kernel_cons(k, projection_matrix, None, (0,), None, is_query=False, eps=0, normalize_data=False)
-    pots_naive = phi_q @ phi_k.T
-    #pots = jnp.exp(lse(jnp.log(phi_q[:,None,:]) + jnp.log(phi_k[None,:,:]),-1))
-    sm_hat = jnp.einsum("qi,ki->qki", phi_q, phi_k)
-    import pdb; pdb.set_trace()
-    return pots / pots.sum(-1, keepdims=True), sm_hat
+    log_phi_q = kernel_cons(
+        q, projection_matrix, None, (0,), None, is_query=True, eps=0, normalize_data=False)
+    log_phi_k = kernel_cons(
+        k, projection_matrix, None, (0,), None, is_query=False, eps=0, normalize_data=False)
+    log_pots_hat = log_phi_q[:,None,:] + log_phi_k[None,:,:]
+    log_pots = lmm(log_phi_q, log_phi_k)
+    return jnp.exp(log_pots - lse(log_pots, -1, keepdims=True)), log_pots_hat
 
 def kl(p, q):
     e_ratio = p * (jnp.log(p) - jnp.log(q))
-    e_ratio = jax.ops.index_update(e_ratio, p == 0, 0)
+    #e_ratio = jax.ops.index_update(e_ratio, p == 0, 0)
     return e_ratio.sum(-1)
 
 key = jax.random.PRNGKey(0)
@@ -194,26 +203,52 @@ q = jax.random.normal(key1, (T, qk_dim))
 k = jax.random.normal(key2, (T, qk_dim))
 qu, ku = q.copy(), k.copy()
 qs, ks = q.copy(), k.copy()
-#num_features = 256
-num_features = 9999
+num_features = 256
+#num_features = 20000
+print(f"num_features = {num_features}")
 
 unstructured = GaussianUnstructuredRandomMatrix(num_features, qk_dim, key).get_2d_array()
 structured = GaussianOrthogonalRandomMatrix(num_features, qk_dim, key).get_2d_array()
 
-attn_dist = attn(q, k)
+attn_dist, logits = attn(q, k)
 projection_matrix = unstructured
-rff_unstruct_attn_dist, unstruct_sm_hat = rff_attn(qu, ku, projection_matrix)
+rff_unstruct_attn_dist, unstruct_logits_hat = rff_attn(qu, ku, projection_matrix)
 projection_matrix = structured
-rff_struct_attn_dist, struct_sm_hat = rff_attn(qs, ks, projection_matrix)
+rff_struct_attn_dist, struct_logits_hat = rff_attn(qs, ks, projection_matrix)
 
 print("kl(attn, unstruct_attn)")
 print(kl(attn_dist, rff_unstruct_attn_dist))
 print("kl(attn, struct_attn)")
 print(kl(attn_dist, rff_struct_attn_dist))
 
-import pdb; pdb.set_trace()
+print("attn exp(logits)")
+print(jnp.exp(logits))
+print("unstruct attn exp(logits)")
+print(jnp.exp(unstruct_logits_hat).mean(-1))
+print("struct attn exp(logits)")
+print(jnp.exp(struct_logits_hat).mean(-1))
+
+print()
+print("unstruct attn var exp(logits)")
+print(jnp.exp(unstruct_logits_hat).var(-1))
+print("struct attn var exp(logits)")
+print(jnp.exp(struct_logits_hat).var(-1))
+
 
 # can we optimize to minimize variance + KL?
-def loss_u(q, k, attn_dist, key):
-    rff_unstruct_attn_dist = rff_attn(qu, ku, projection_matrix)
-    return kl(attn_dist, rff_unstruct_attn_dist)
+def loss_u(q, k, attn_dist, projection_matrix):
+    rff_unstruct_attn_dist, _ = rff_attn(q, k, projection_matrix)
+    return kl(attn_dist, rff_unstruct_attn_dist).sum()
+
+
+jit_L = jax.jit(jax.value_and_grad(loss_u, argnums=(0, 1)))
+
+NUM_ITERS = 1000
+alpha = 1e-3
+for i in range(NUM_ITERS):
+    projection_matrix = GaussianOrthogonalRandomMatrix(num_features, qk_dim, key).get_2d_array()
+    kl_val, (dq, dk) = jit_L(qu, ku, attn_dist, projection_matrix)
+    print(kl_val)
+    qu -= alpha * dq
+    ku -= alpha * dk
+import pdb; pdb.set_trace()
