@@ -244,11 +244,20 @@ def loss_u(q, k, attn_dist, projection_matrix):
 jit_L = jax.jit(jax.value_and_grad(loss_u, argnums=(0, 1)))
 
 NUM_ITERS = 1000
-alpha = 1e-3
+alpha = 1e-2
 for i in range(NUM_ITERS):
-    projection_matrix = GaussianOrthogonalRandomMatrix(num_features, qk_dim, key).get_2d_array()
+    key, key1 = jax.random.split(key, 2)
+    projection_matrix = GaussianOrthogonalRandomMatrix(num_features, qk_dim, key1).get_2d_array()
     kl_val, (dq, dk) = jit_L(qu, ku, attn_dist, projection_matrix)
     print(kl_val)
     qu -= alpha * dq
     ku -= alpha * dk
-import pdb; pdb.set_trace()
+
+# get covariance
+for i in range(5):
+    key, key1 = jax.random.split(key, 2)
+    projection_matrix = GaussianOrthogonalRandomMatrix(num_features, qk_dim, key1).get_2d_array()
+    rff_attn_dist, logits_hat = rff_attn(qu, ku, projection_matrix)
+    print(rff_attn_dist)
+    print(jnp.exp(logits_hat).var(-1))
+    import pdb; pdb.set_trace()
