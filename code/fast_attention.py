@@ -27,6 +27,10 @@ import functools
 #from absl import logging
 import logging
 #import gin
+
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+
 import jax
 from jax import lax
 from jax import random
@@ -35,6 +39,8 @@ import jax.numpy as jnp
 from jax.scipy.special import logsumexp as lse
 
 import numpy as onp
+
+import streamlit as st
 
 #onp.set_printoptions(precision=2)
 onp.set_printoptions(suppress=True, precision=2)
@@ -120,13 +126,16 @@ class RandomMatrix(object):
 
 class GaussianUnstructuredRandomMatrix(RandomMatrix):
 
-  def __init__(self, nb_rows, nb_columns, key):
-    self.nb_rows = nb_rows
-    self.nb_columns = nb_columns
-    self.key = key
+    def __init__(self, nb_rows, nb_columns, key):
+        self.nb_rows = nb_rows
+        self.nb_columns = nb_columns
+        self.key = key
 
-  def get_2d_array(self):
-    return random.normal(self.key, (self.nb_rows, self.nb_columns))
+    def get_2d_array(self, bsz=None):
+        if bsz is None:
+            return random.normal(self.key, (self.nb_rows, self.nb_columns))
+        else:
+            return random.normal(self.key, (bsz, self.nb_rows, self.nb_columns))
 
 
 class GaussianOrthogonalRandomMatrix(RandomMatrix):
@@ -141,7 +150,7 @@ class GaussianOrthogonalRandomMatrix(RandomMatrix):
     self.key = key
     self.scaling = scaling
 
-  def get_2d_array(self):
+  def get_2d_array(self, bsz=None):
     nb_full_blocks = int(self.nb_rows / self.nb_columns)
     block_list = []
     rng = self.key
@@ -171,6 +180,45 @@ class GaussianOrthogonalRandomMatrix(RandomMatrix):
       raise ValueError('Scaling must be one of {0, 1}. Was %s' % self._scaling)
 
     return jnp.matmul(jnp.diag(multiplier), final_matrix)
+
+def get_2d_array(self, unstructured_blocks, scaling=0):
+    nb_rows, nb_columns = unstructured_blocks
+    nb_full_blocks = int(self.nb_rows / self.nb_columns)
+
+    remaining_rows = self.nb_rows - nb_full_blocks * self.nb_columns
+    if remaining_rows > 0:
+        raise ValueError("Assert nb_rows % nb_columns == 0 for simplicity")
+
+    block_list = []
+    for i in range(nb_full_blocks):
+        start = i * nb_columns
+        end = (i+1) * nb_columns
+        unstructured_block = unstructured_blocks[start:end]
+        q, _ = jnp.linalg.qr(unstructured_block)
+        q = jnp.transpose(q)
+        block_list.append(q)
+
+    final_matrix = jnp.vstack(block_list)
+
+    if self.scaling == 0:
+      multiplier = jnp.linalg.norm(
+          random.normal(self.key, (self.nb_rows, self.nb_columns)), axis=1)
+    elif self.scaling == 1:
+      multiplier = jnp.sqrt(float(self.nb_columns)) * jnp.ones((self.nb_rows))
+    else:
+      raise ValueError('Scaling must be one of {0, 1}. Was %s' % self._scaling)
+
+    return jnp.matmul(jnp.diag(multiplier), final_matrix)
+
+# input: random samples `unstructured_blocks`
+get_2d_arrays = jax.jit(jax.vmap(get_2d_array))
+
+def unstructured_blocks(num_features, original_dim, key, bsz=None):
+    shape = ((num_features, original_dim)
+        if bsz is None
+        else (bsz, num_features, original_dim)
+    )
+    return random.normal(key, shape)
 
 # tests
 def attn(q, k):
@@ -205,7 +253,12 @@ qu, ku = q.copy(), k.copy()
 qs, ks = q.copy(), k.copy()
 num_features = 256
 #num_features = 20000
-print(f"num_features = {num_features}")
+
+st.markdown("## Categorical approximation")
+st.write("We start by trying to approximate a small-dimensional categorical distribution.")
+
+st.write("We use the RFF approximation with")
+st.write(f"num_features = {num_features}")
 
 unstructured = GaussianUnstructuredRandomMatrix(num_features, qk_dim, key).get_2d_array()
 structured = GaussianOrthogonalRandomMatrix(num_features, qk_dim, key).get_2d_array()
@@ -216,42 +269,52 @@ rff_unstruct_attn_dist, unstruct_logits_hat = rff_attn(qu, ku, projection_matrix
 projection_matrix = structured
 rff_struct_attn_dist, struct_logits_hat = rff_attn(qs, ks, projection_matrix)
 
-print("kl(attn, unstruct_attn)")
-print(kl(attn_dist, rff_unstruct_attn_dist))
-print("kl(attn, struct_attn)")
-print(kl(attn_dist, rff_struct_attn_dist))
+def write(x):
+    st.dataframe(jnp.asarray(x))
 
-print("attn exp(logits)")
-print(jnp.exp(logits))
-print("unstruct attn exp(logits)")
-print(jnp.exp(unstruct_logits_hat).mean(-1))
-print("struct attn exp(logits)")
-print(jnp.exp(struct_logits_hat).mean(-1))
+st.write("kl(attn, unstruct_attn)")
+write(kl(attn_dist, rff_unstruct_attn_dist))
+st.write("kl(attn, struct_attn)")
+write(kl(attn_dist, rff_struct_attn_dist))
 
-print()
-print("unstruct attn var exp(logits)")
-print(jnp.exp(unstruct_logits_hat).var(-1))
-print("struct attn var exp(logits)")
-print(jnp.exp(struct_logits_hat).var(-1))
+st.write("attn exp(logits)")
+write(jnp.exp(logits))
+st.write("unstruct attn exp(logits)")
+write(jnp.exp(unstruct_logits_hat).mean(-1))
+st.write("struct attn exp(logits)")
+write(jnp.exp(struct_logits_hat).mean(-1))
+
+st.write()
+st.write("unstruct attn var exp(logits)")
+write(jnp.exp(unstruct_logits_hat).var(-1))
+st.write("struct attn var exp(logits)")
+write(jnp.exp(struct_logits_hat).var(-1))
 
 
 # can we optimize to minimize variance + KL?
 def loss_u(q, k, attn_dist, projection_matrix):
     rff_unstruct_attn_dist, _ = rff_attn(q, k, projection_matrix)
-    return kl(attn_dist, rff_unstruct_attn_dist).sum()
-
+    return kl(attn_dist, rff_unstruct_attn_dist).mean()
 
 jit_L = jax.jit(jax.value_and_grad(loss_u, argnums=(0, 1)))
 
 NUM_ITERS = 1000
 alpha = 1e-2
+losses = onp.zeros((NUM_ITERS,))
 for i in range(NUM_ITERS):
     key, key1 = jax.random.split(key, 2)
     projection_matrix = GaussianOrthogonalRandomMatrix(num_features, qk_dim, key1).get_2d_array()
     kl_val, (dq, dk) = jit_L(qu, ku, attn_dist, projection_matrix)
-    print(kl_val)
     qu -= alpha * dq
     ku -= alpha * dk
+    losses[i] = kl_val
+
+fig = go.Figure(data=go.Scatter(
+    x = onp.arange(NUM_ITERS),
+    y = losses,
+    mode = "markers",
+))
+st.plotly_chart(fig, use_container_width=True)
 
 # get covariance
 for i in range(5):
@@ -260,4 +323,4 @@ for i in range(5):
     rff_attn_dist, logits_hat = rff_attn(qu, ku, projection_matrix)
     print(rff_attn_dist)
     print(jnp.exp(logits_hat).var(-1))
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
