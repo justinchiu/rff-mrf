@@ -4,3 +4,4 @@
 *.out
 *.blg
 *.fdb_latexmk
+__pycache__
