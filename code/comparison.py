@@ -40,15 +40,17 @@ def comp(num_features, q, k, key, num_samples=128):
     return (true_attn,) + tuple(jnp.stack(x) for x in [samples, gsamples, nsamples])
 
 
-def report_mse(sample, true):
-    print("mean")
-    print(sample.mean(0))
-    print("variance")
+def report_mse(sample, true, quiet=False):
     var = sample.var(0)
-    print(var)
-    print("bias ^ 2")
     bias = sample.mean(0) - true
-    print(bias ** 2)
+    if not quiet:
+        print("mean")
+        print(sample.mean(0))
+        print("variance")
+        print(var)
+        print("bias ^ 2")
+        print(bias ** 2)
+    print("total mse")
     print((bias ** 2 + var).sum())
 
 def print_comp(num_features, q, k, key):
@@ -66,12 +68,12 @@ def print_comp(num_features, q, k, key):
 def print_comp_true(num_features, q, k, true_attn, key):
     _, samples, gsamples, nsamples = comp(num_features, q, k, key)
 
-    print("true")
-    print(true_attn)
+    #print("true")
+    #print(true_attn)
     print("orth")
-    report_mse(samples, true_attn)
+    report_mse(samples, true_attn, quiet=True)
     print("norm orth")
-    report_mse(nsamples, true_attn)
+    report_mse(nsamples, true_attn, quiet=True)
     print("gaussian")
-    report_mse(gsamples, true_attn)
+    report_mse(gsamples, true_attn, quiet=True)
 

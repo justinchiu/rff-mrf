@@ -21,8 +21,8 @@ import plotly.graph_objects as go
 import streamlit as st
 
 num_features = 256
-qk_dim = 8
-T = 4
+qk_dim = 128
+T = 64
 
 key = jax.random.PRNGKey(0)
 
@@ -131,8 +131,8 @@ print("possible fix: keep values low with clamping or renorm?")
 print("Learn through approximation directly")
 print("try to fit low entropy distributions")
 
-num_iters = 1000
-alpha = 1e-2
+num_iters = 2000
+alpha = 0.25
 
 def report_train(proj_fn, L_dL, key):
     key, key_train = jax.random.split(key)
