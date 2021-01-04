@@ -35,7 +35,6 @@ import plotly.graph_objects as go
 
 import streamlit as st
 
-onp.set_printoptions(suppress=True, precision=2)
 
 def nonnegative_softmax_kernel_feature_creator(
     data,
@@ -65,10 +64,8 @@ def nonnegative_softmax_kernel_feature_creator(
 
     # ratio is for computing the empirical mean / avg
     # its a constant that gets cancelled out in softmax though?
-    ratio = 1.0 / jnp.sqrt(projection_matrix.shape[0])
-    #ratio = 1.0
-    #data_mod_shape = data.shape[0:len(batch_dims_t)] + projection_matrix.shape
-    #data_thick_random_matrix = jnp.zeros(data_mod_shape) + projection_matrix
+    #ratio = 1.0 / jnp.sqrt(projection_matrix.shape[0])
+    ratio = 1.0
 
     # matmul / linear projection
     data_dash = jnp.einsum("...bd,...fd->...bf", data_normalizer * data, projection_matrix)
@@ -145,79 +142,6 @@ def nonnegative_softmax_kernel_feature_creator0(
   return data_dash
   #"""
 
-# garbage
-class RandomMatrix(object):
-  r"""Abstract class providing a method for constructing 2D random arrays.
-
-  Class is responsible for constructing 2D random arrays.
-  """
-
-  __metaclass__ = abc.ABCMeta
-
-  @abc.abstractmethod
-  def get_2d_array(self):
-    raise NotImplementedError('Abstract method')
-
-
-class GaussianUnstructuredRandomMatrix(RandomMatrix):
-
-    def __init__(self, nb_rows, nb_columns, key):
-        self.nb_rows = nb_rows
-        self.nb_columns = nb_columns
-        self.key = key
-
-    def get_2d_array(self, bsz=None):
-        if bsz is None:
-            return random.normal(self.key, (self.nb_rows, self.nb_columns))
-        else:
-            return random.normal(self.key, (bsz, self.nb_rows, self.nb_columns))
-
-
-class GaussianOrthogonalRandomMatrix(RandomMatrix):
-  r"""Class providing a method to create Gaussian orthogonal matrix.
-
-  Class is responsible for constructing 2D Gaussian orthogonal arrays.
-  """
-
-  def __init__(self, nb_rows, nb_columns, key, scaling=0):
-    self.nb_rows = nb_rows
-    self.nb_columns = nb_columns
-    self.key = key
-    self.scaling = scaling
-
-  def get_2d_array(self, bsz=None):
-    nb_full_blocks = int(self.nb_rows / self.nb_columns)
-    block_list = []
-    rng = self.key
-    for _ in range(nb_full_blocks):
-      rng, rng_input = jax.random.split(rng)
-      unstructured_block = random.normal(rng_input,
-                                         (self.nb_columns, self.nb_columns))
-      q, _ = jnp.linalg.qr(unstructured_block)
-      q = jnp.transpose(q)
-      block_list.append(q)
-    remaining_rows = self.nb_rows - nb_full_blocks * self.nb_columns
-    if remaining_rows > 0:
-      rng, rng_input = jax.random.split(rng)
-      unstructured_block = random.normal(rng_input,
-                                         (self.nb_columns, self.nb_columns))
-      q, _ = jnp.linalg.qr(unstructured_block)
-      q = jnp.transpose(q)
-      block_list.append(q[0:remaining_rows])
-    final_matrix = jnp.vstack(block_list)
-
-    if self.scaling == 0:
-      multiplier = jnp.linalg.norm(
-          random.normal(self.key, (self.nb_rows, self.nb_columns)), axis=1)
-    elif self.scaling == 1:
-      multiplier = jnp.sqrt(float(self.nb_columns)) * jnp.ones((self.nb_rows))
-    else:
-      raise ValueError('Scaling must be one of {0, 1}. Was %s' % self._scaling)
-
-    return jnp.matmul(jnp.diag(multiplier), final_matrix)
-
-# /garbage
-
 def get_2d_array(unstructured_blocks, key, scaling=0):
     nb_rows, nb_columns = unstructured_blocks.shape
     nb_full_blocks = int(nb_rows / nb_columns)
@@ -225,13 +149,15 @@ def get_2d_array(unstructured_blocks, key, scaling=0):
     remaining_rows = nb_rows - nb_full_blocks * nb_columns
     if remaining_rows > 0:
         raise ValueError("Assert nb_rows % nb_columns == 0 for simplicity")
+        # if want to change this take a look at the garbage in fast_attention.py
+        # from https://github.com/google-research/google-research/blob/master/performer/fast_attention/jax/fast_attention.py
 
     blocks = unstructured_blocks.reshape((nb_full_blocks, nb_columns, nb_columns))
     Q, _ = jnp.linalg.qr(blocks)
     final_matrix = Q.transpose((0, 2, 1)).reshape(-1, nb_columns)
 
+    # scales matrix back after QR
     if scaling == 0:
-        # what is this for?
         multiplier = jnp.linalg.norm(
             random.normal(key, (nb_rows, nb_columns)), axis=1)
     elif scaling == 1:
@@ -263,9 +189,15 @@ lmm = jax.jit(lambda x,y: lse(x[:,None,:] + y[None,:,:], -1))
 def rff_attn(q, k, projection_matrix):
     kernel_cons = nonnegative_softmax_kernel_feature_creator
     log_phi_q = kernel_cons(
-        q, projection_matrix, is_query=True, eps=0, normalize_data=True)
+        q, projection_matrix, is_query=True, eps=0,
+        #normalize_data=True,
+        normalize_data=False,
+    )
     log_phi_k = kernel_cons(
-        k, projection_matrix, is_query=False, eps=0, normalize_data=True)
+        k, projection_matrix, is_query=False, eps=0,
+        #normalize_data=True,
+        normalize_data=False,
+    )
     log_pots_hat = log_phi_q[:,None,:] + log_phi_k[None,:,:]
     # average
     log_pots = lmm(log_phi_q, log_phi_k) - math.log(k.shape[0])
@@ -276,9 +208,15 @@ rffa = jax.jit(rff_attn)
 def rff_attn0(q, k, projection_matrix):
     kernel_cons = nonnegative_softmax_kernel_feature_creator0
     phi_q = kernel_cons(
-        q, projection_matrix, (0,), None, is_query=True, eps=0, normalize_data=True)
+        q, projection_matrix, (0,), None, is_query=True, eps=0,
+        #normalize_data=True,
+        normalize_data=False,
+    )
     phi_k = kernel_cons(
-        k, projection_matrix, (0,), None, is_query=False, eps=0, normalize_data=True)
+        k, projection_matrix, (0,), None, is_query=False, eps=0,
+        #normalize_data=True,
+        normalize_data=False,
+    )
     uprobs = phi_q @ phi_k.T
     return uprobs / uprobs.sum(-1, keepdims=True)
 
@@ -290,6 +228,8 @@ def kl(p, q):
     return e_ratio.sum(-1)
 
 if __name__ == "__main__":
+    onp.set_printoptions(suppress=True, precision=2)
+
     key = jax.random.PRNGKey(0)
 
     key, key1, key2 = jax.random.split(key, 3)
@@ -424,7 +364,6 @@ if __name__ == "__main__":
     ))
     st.plotly_chart(fig, use_container_width=True)
     """
-
 
     # get covariance
     N = 2
