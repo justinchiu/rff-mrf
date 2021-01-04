@@ -51,3 +51,27 @@ def report_mse(sample, true):
     print(bias ** 2)
     print((bias ** 2 + var).sum())
 
+def print_comp(num_features, q, k, key):
+    true_attn, samples, gsamples, nsamples = comp(num_features, q, k, key)
+
+    print("true")
+    print(true_attn)
+    print("orth")
+    report_mse(samples, true_attn)
+    print("norm orth")
+    report_mse(nsamples, true_attn)
+    print("gaussian")
+    report_mse(gsamples, true_attn)
+
+def print_comp_true(num_features, q, k, true_attn, key):
+    _, samples, gsamples, nsamples = comp(num_features, q, k, key)
+
+    print("true")
+    print(true_attn)
+    print("orth")
+    report_mse(samples, true_attn)
+    print("norm orth")
+    report_mse(nsamples, true_attn)
+    print("gaussian")
+    report_mse(gsamples, true_attn)
+

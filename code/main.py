@@ -1,4 +1,6 @@
 
+import functools
+
 import torch
 import torch.nn as nn
 
@@ -7,10 +9,16 @@ import jax.numpy as jnp
 
 import numpy as onp
 
+from utils import renorm
+
 import fast_attention as fat
 import torch_fast_attention as tfat
 
-from comparison import comp, report_mse
+from comparison import print_comp, report_mse, comp, print_comp_true
+
+import plotly.graph_objects as go
+
+import streamlit as st
 
 num_features = 256
 qk_dim = 8
@@ -105,17 +113,74 @@ print("satisfied all versions are close")
 
 print("Geometry of proj")
 
-true_attn, samples, gsamples, nsamples = comp(num_features, q, k, key)
+print("Gaussian Q K")
+#true_attn, samples, gsamples, nsamples = comp(num_features, q, k, key)
+print_comp(num_features, q, k, key)
 
-print("true")
-print(true_attn)
-print("orth")
-report_mse(samples, true_attn)
-print("norm orth")
-report_mse(nsamples, true_attn)
-print("gaussian")
-report_mse(gsamples, true_attn)
+sqrt_temp = 1.2
+print(f"Gaussian Q K / {sqrt_temp}")
+#true_attn, samples, gsamples, nsamples = comp(num_features, q / sqrt_temp, k / sqrt_temp, key)
+print_comp(num_features, q / sqrt_temp, k / sqrt_temp, key)
 
-print("conclusion: bad approximation in general because of BIAS.")
+print("observation: bad approximation in general because of BIAS with low entropy.")
+print("conclusion: not a good idea to directly approximate with RFF, verifies experiments in RFF MT")
+print("observation: approximation gets better when scaling embeddings by scaling towards 0")
+print("possible explanation: need large number of samples for linear approximation of exponential?")
+print("possible fix: keep values low with clamping or renorm?")
 
+print("Learn through approximation directly")
+print("try to fit low entropy distributions")
 
+num_iters = 1000
+alpha = 1e-2
+
+def report_train(proj_fn, L_dL, key):
+    key, key_train = jax.random.split(key)
+    losses, q_t, k_t = fat.train(q.copy(), k.copy(), true_attn, L_dL, proj_fn, alpha, num_iters, key_train)
+    fig = go.Figure(data=go.Scatter(
+        x = onp.arange(num_iters),
+        y = losses,
+        mode = "markers",
+    ))
+    st.plotly_chart(fig, use_container_width=True)
+    key, key_comp = jax.random.split(key)
+    print_comp_true(num_features, q_t, k_t, true_attn, key_comp)
+
+# SM
+def loss(q, k, attn_dist, proj):
+    ra, _ = fat.rff_attn(q, k, proj)
+    return fat.kl(attn_dist, ra).mean()
+L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1)))
+
+def proj_fn(shape, key):
+    sample_key, norm_key  = jax.random.split(key)
+    gaussian_sample = fat.random_projection(num_features, qk_dim, sample_key)
+    projection_matrix = fat.get_2d_array(gaussian_sample, norm_key, scaling=1)
+    return projection_matrix
+proj_f = functools.partial(proj_fn, (num_features, qk_dim))
+
+key, key1 = jax.random.split(key)
+print("Normal fit")
+report_train(proj_f, L_dL, key1)
+
+def loss(q, k, attn_dist, proj):
+    qp = renorm(q, 2, axis=-1)
+    kp = renorm(k, 2, axis=-1)
+    ra, _ = fat.rff_attn(qp, kp, proj)
+    return fat.kl(attn_dist, ra).mean()
+L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1)))
+
+key, key1 = jax.random.split(key)
+print("Projected L2 fit")
+report_train(proj_f, L_dL, key1)
+
+def loss(q, k, attn_dist, proj):
+    qp = jax.lax.clamp(-2., q, 2.)
+    kp = jax.lax.clamp(-2., k, 2.)
+    ra, _ = fat.rff_attn(qp, kp, proj)
+    return fat.kl(attn_dist, ra).mean()
+L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1)))
+
+key, key1 = jax.random.split(key)
+print("Projected Linf fit")
+report_train(proj_f, L_dL, key1)
