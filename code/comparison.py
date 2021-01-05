@@ -52,6 +52,8 @@ def report_mse(sample, true, quiet=False):
         print(bias ** 2)
     print("total mse")
     print((bias ** 2 + var).sum())
+    print("mean mse")
+    print((bias ** 2 + var).mean())
 
 def print_comp(num_features, q, k, key):
     true_attn, samples, gsamples, nsamples = comp(num_features, q, k, key)

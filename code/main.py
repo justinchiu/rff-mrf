@@ -21,8 +21,8 @@ import plotly.graph_objects as go
 import streamlit as st
 
 num_features = 256
-qk_dim = 128
-T = 64
+qk_dim = 64
+T = 8
 
 key = jax.random.PRNGKey(0)
 
@@ -148,7 +148,8 @@ def report_train(proj_fn, L_dL, key):
 
 # SM
 def loss(q, k, attn_dist, proj):
-    ra, _ = fat.rff_attn(q, k, proj)
+    # numerically unstable
+    ra, _ = fat.rff_attn(q, k, proj, eps=1e-6)
     return fat.kl(attn_dist, ra).mean()
 L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1)))
 
@@ -184,3 +185,5 @@ L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1)))
 key, key1 = jax.random.split(key)
 print("Projected Linf fit")
 report_train(proj_f, L_dL, key1)
+
+

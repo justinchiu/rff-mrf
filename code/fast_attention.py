@@ -127,9 +127,6 @@ def nonnegative_softmax_kernel_feature_creator0(
   diag_data = (diag_data / 2.0) * data_normalizer * data_normalizer
   diag_data = jnp.expand_dims(diag_data, axis=data.ndim - 1)
 
-  #return data_dash - diag_data 
-
-  #"""
   if is_query:
     last_dims_t = (len(data_dash.shape) - 1,)
     data_dash = ratio * (
@@ -140,7 +137,6 @@ def nonnegative_softmax_kernel_feature_creator0(
         jnp.exp(data_dash - diag_data - jnp.max(data_dash)) + eps)
 
   return data_dash
-  #"""
 
 def get_2d_array(unstructured_blocks, key, scaling=0):
     nb_rows, nb_columns = unstructured_blocks.shape
@@ -186,15 +182,15 @@ def attn(q, k):
 
 lmm = jax.jit(lambda x,y: lse(x[:,None,:] + y[None,:,:], -1))
 
-def rff_attn(q, k, projection_matrix):
+def rff_attn(q, k, projection_matrix, eps=0):
     kernel_cons = nonnegative_softmax_kernel_feature_creator
     log_phi_q = kernel_cons(
-        q, projection_matrix, is_query=True, eps=0,
+        q, projection_matrix, is_query=True, eps=eps,
         #normalize_data=True,
         normalize_data=False,
     )
     log_phi_k = kernel_cons(
-        k, projection_matrix, is_query=False, eps=0,
+        k, projection_matrix, is_query=False, eps=eps,
         #normalize_data=True,
         normalize_data=False,
     )
