@@ -145,12 +145,16 @@ def report_train(q, k, proj_fn, L_dL, key, sample=True):
         alpha, num_iters,
         key_train, sample,
     )
-    fig = go.Figure(data=go.Scatter(
-        x = onp.arange(num_iters),
-        y = losses,
-        mode = "markers",
-    ))
+
+    fig = go.Figure(
+        data = go.Scatter(
+            x = onp.arange(num_iters),
+            y = losses,
+            mode = "markers",
+        ),
+    )
     st.plotly_chart(fig, use_container_width=True)
+
     if sample:
         key, key_comp = jax.random.split(key)
     else:

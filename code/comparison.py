@@ -9,12 +9,6 @@ import fast_attention as fat
 def comp(num_features, q, k, key, num_samples=128, sample=True):
     T, qk_dim = q.shape
 
-    q0, k0 = q.copy(), k.copy()
-
-    key, sample_key, norm_key  = jax.random.split(key, 3)
-    gaussian_sample = fat.random_projection(num_features, qk_dim, sample_key)
-    projection_matrix = fat.get_2d_array(gaussian_sample, norm_key)
-
     # compare all attention implementations
     vals = jnp.exp(q @ k.T)
     true_attn = vals / vals.sum(-1, keepdims=True)
@@ -26,8 +20,7 @@ def comp(num_features, q, k, key, num_samples=128, sample=True):
         if sample:
             key, sample_key, norm_key  = jax.random.split(key, 3)
         else:
-            sample_key = key
-            norm_key = key
+            sample_key, norm_key = jax.random.split(key)
 
         gaussian_sample = fat.random_projection(num_features, qk_dim, sample_key)
         projection_matrix = fat.get_2d_array(gaussian_sample, norm_key)
