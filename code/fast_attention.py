@@ -223,10 +223,13 @@ def kl(p, q):
     #e_ratio = jax.ops.index_update(e_ratio, p == 0, 0)
     return e_ratio.sum(-1)
 
-def train(q, k, true_attn, L_dL, proj_fn, alpha, num_iters, key):
+def train(q, k, true_attn, L_dL, proj_fn, alpha, num_iters, key, sample=True):
     losses = onp.zeros((num_iters,))
     for i in range(num_iters):
-        key, key_sample = jax.random.split(key)
+        if sample:
+            key, key_sample = jax.random.split(key)
+        else:
+            key_sample = key
         projection_matrix = proj_fn(key_sample)
         kl_val, (dq, dk) = L_dL(q, k, true_attn, projection_matrix)
         q -= alpha * dq

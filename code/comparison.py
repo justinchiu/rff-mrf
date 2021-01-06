@@ -6,7 +6,7 @@ import numpy as onp
 import fast_attention as fat
 
 
-def comp(num_features, q, k, key, num_samples=128):
+def comp(num_features, q, k, key, num_samples=128, sample=True):
     T, qk_dim = q.shape
 
     q0, k0 = q.copy(), k.copy()
@@ -23,7 +23,12 @@ def comp(num_features, q, k, key, num_samples=128):
     gsamples = []
     nsamples = []
     for i in range(num_samples):
-        key, sample_key, norm_key  = jax.random.split(key, 3)
+        if sample:
+            key, sample_key, norm_key  = jax.random.split(key, 3)
+        else:
+            sample_key = key
+            norm_key = key
+
         gaussian_sample = fat.random_projection(num_features, qk_dim, sample_key)
         projection_matrix = fat.get_2d_array(gaussian_sample, norm_key)
 
@@ -50,10 +55,8 @@ def report_mse(sample, true, quiet=False):
         print(var)
         print("bias ^ 2")
         print(bias ** 2)
-    print("total mse")
-    print((bias ** 2 + var).sum())
-    print("mean mse")
-    print((bias ** 2 + var).mean())
+    print(f"total mse {(bias ** 2 + var).sum()}")
+    #print(f"mean mse {(bias ** 2 + var).mean()}")
 
 def print_comp(num_features, q, k, key):
     true_attn, samples, gsamples, nsamples = comp(num_features, q, k, key)
@@ -67,8 +70,8 @@ def print_comp(num_features, q, k, key):
     print("gaussian")
     report_mse(gsamples, true_attn)
 
-def print_comp_true(num_features, q, k, true_attn, key):
-    _, samples, gsamples, nsamples = comp(num_features, q, k, key)
+def print_comp_true(num_features, q, k, true_attn, key, sample=True):
+    _, samples, gsamples, nsamples = comp(num_features, q, k, key, sample=sample)
 
     #print("true")
     #print(true_attn)

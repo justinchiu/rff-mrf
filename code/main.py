@@ -134,56 +134,94 @@ print("try to fit low entropy distributions")
 num_iters = 2000
 alpha = 0.25
 
-def report_train(proj_fn, L_dL, key):
+def report_train(q, k, proj_fn, L_dL, key, sample=True):
+    vals = jnp.exp(q @ k.T)
+    true_attn = vals / vals.sum(-1, keepdims=True)
+
     key, key_train = jax.random.split(key)
-    losses, q_t, k_t = fat.train(q.copy(), k.copy(), true_attn, L_dL, proj_fn, alpha, num_iters, key_train)
+    losses, q_t, k_t = fat.train(
+        q.copy(), k.copy(),
+        true_attn, L_dL, proj_fn,
+        alpha, num_iters,
+        key_train, sample,
+    )
     fig = go.Figure(data=go.Scatter(
         x = onp.arange(num_iters),
         y = losses,
         mode = "markers",
     ))
     st.plotly_chart(fig, use_container_width=True)
-    key, key_comp = jax.random.split(key)
-    print_comp_true(num_features, q_t, k_t, true_attn, key_comp)
-
-# SM
-def loss(q, k, attn_dist, proj):
-    # numerically unstable
-    ra, _ = fat.rff_attn(q, k, proj, eps=1e-6)
-    return fat.kl(attn_dist, ra).mean()
-L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1)))
-
-def proj_fn(shape, key):
-    sample_key, norm_key  = jax.random.split(key)
-    gaussian_sample = fat.random_projection(num_features, qk_dim, sample_key)
-    projection_matrix = fat.get_2d_array(gaussian_sample, norm_key, scaling=1)
-    return projection_matrix
-proj_f = functools.partial(proj_fn, (num_features, qk_dim))
-
-key, key1 = jax.random.split(key)
-print("Normal fit")
-report_train(proj_f, L_dL, key1)
-
-def loss(q, k, attn_dist, proj):
-    qp = renorm(q, 2, axis=-1)
-    kp = renorm(k, 2, axis=-1)
-    ra, _ = fat.rff_attn(qp, kp, proj)
-    return fat.kl(attn_dist, ra).mean()
-L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1)))
-
-key, key1 = jax.random.split(key)
-print("Projected L2 fit")
-report_train(proj_f, L_dL, key1)
-
-def loss(q, k, attn_dist, proj):
-    qp = jax.lax.clamp(-2., q, 2.)
-    kp = jax.lax.clamp(-2., k, 2.)
-    ra, _ = fat.rff_attn(qp, kp, proj)
-    return fat.kl(attn_dist, ra).mean()
-L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1)))
-
-key, key1 = jax.random.split(key)
-print("Projected Linf fit")
-report_train(proj_f, L_dL, key1)
+    if sample:
+        key, key_comp = jax.random.split(key)
+    else:
+        key_comp = key_train
+    print_comp_true(num_features, q_t, k_t, true_attn, key_comp, sample)
 
 
+key_train_init = key
+
+
+def inner(num_features, qk_dim, T):
+    qk_key = jax.random.PRNGKey(111)
+    key1, key2 = jax.random.split(qk_key)
+    q = jax.random.normal(key1, (T, qk_dim))
+    k = jax.random.normal(key2, (T, qk_dim))
+
+    def proj_fn(shape, key):
+        sample_key, norm_key  = jax.random.split(key)
+        gaussian_sample = fat.random_projection(num_features, qk_dim, sample_key)
+        projection_matrix = fat.get_2d_array(gaussian_sample, norm_key, scaling=0)
+        return projection_matrix
+    proj_fn = functools.partial(proj_fn, (num_features, qk_dim))
+
+    def proj_fn_reg(shape, key):
+        sample_key, norm_key  = jax.random.split(key)
+        gaussian_sample = fat.random_projection(num_features, qk_dim, sample_key)
+        projection_matrix = fat.get_2d_array(gaussian_sample, norm_key, scaling=1)
+        return projection_matrix
+    proj_fn_reg = functools.partial(proj_fn_reg, (num_features, qk_dim))
+
+    for sample_key in [True, False]:
+        #for proj_fn in [proj_fn, proj_fn_reg]:
+        for proj_fn in [proj_fn]:
+            def loss(q, k, attn_dist, proj):
+                # numerically unstable?
+                ra, _ = fat.rff_attn(q, k, proj, eps=1e-6)
+                return fat.kl(attn_dist, ra).mean()
+            L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1)))
+
+            key, key1 = jax.random.split(key_train_init)
+            print(f"Normal fit (Sample: {sample_key})")
+            report_train(q, k, proj_fn, L_dL, key1, sample_key)
+
+            def loss(q, k, attn_dist, proj):
+                qp = renorm(q, 2, axis=-1)
+                kp = renorm(k, 2, axis=-1)
+                ra, _ = fat.rff_attn(qp, kp, proj)
+                return fat.kl(attn_dist, ra).mean()
+            L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1)))
+
+            key, key1 = jax.random.split(key_train_init)
+            print(f"Projected L2 fit (Sample: {sample_key})")
+            report_train(q, k, proj_fn, L_dL, key1, sample_key)
+
+            def loss(q, k, attn_dist, proj):
+                qp = jax.lax.clamp(-2., q, 2.)
+                kp = jax.lax.clamp(-2., k, 2.)
+                ra, _ = fat.rff_attn(qp, kp, proj)
+                return fat.kl(attn_dist, ra).mean()
+            L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1)))
+
+            key, key1 = jax.random.split(key_train_init)
+            print(f"Projected Linf fit (Sample: {sample_key})")
+            report_train(q, k, proj_fn, L_dL, key1, sample_key)
+
+
+num_features = 256
+qk_dim = 64
+T = 8
+
+for qk_dim in [64, 128]:
+    for T in [8, 32, 128]:
+        print(f"num_features {num_features} qk_dim {qk_dim} T {T}")
+        inner(num_features, qk_dim, T)
