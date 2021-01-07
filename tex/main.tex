@@ -8,6 +8,7 @@
 \usepackage[noend]{algpseudocode}
 \usepackage{hyperref}
 \usepackage{todonotes}
+\usepackage{algorithm}
 
 \usepackage{tikz}
 \usetikzlibrary{bayesnet}
@@ -289,7 +290,59 @@ Again, each of the summations and summands can be computed in parallel.
 \section{HSMM}
 
 \section{Application to WCFGs}
-todo
+\begin{algorithm}[H]
+  \begin{algorithmic}[1]
+    \Function{INSIDE}{$\pi$, $w$}
+      \State initialize all $\beta[\cdot_\cdot^\cdot]$ to 0
+      \For{$k := 1 \to n$} \Comment{width-1 constituents}
+        \For{$A\in \mathcal{N}$}
+        \State{$\beta[A_{k-1}^k]+= \pi (A\to w_k)$} \Comment{$O(K^2)$}  
+        \EndFor    
+    \EndFor
+    \For{$\text{width} := 2 \to n$} \Comment{wider constituents}
+      \For{$i := 0 \to n-\text{width}$} \Comment{start point}
+        \State $k := i + \text{width}$ \Comment{end point}
+        \For{$j := i + 1 \to k-1$} \Comment{midpoint}
+          \For{$A,B,C \in \mathcal{N}$}
+            \State $\beta [A_{i}^k]+ = \pi (A \to B C) \beta[B_i^j] \beta[C_j^k]$
+          \EndFor
+        \EndFor
+      \EndFor
+    \EndFor
+    \State\Return $Z:=\beta[\text{ROOT}_0^n]$ 
+    \EndFunction
+  \end{algorithmic}
+  \caption{\label{algo:inside}The inside algorithm from \cite{eisner2016inside}}
+\end{algorithm}
+The inside algorithm is outlined in Algorithm~\ref{algo:inside}. With $n$ words and $|\mathcal{N}|$ non-terminals, the complexity is
+\begin{equation}
+    O(n^3 |\mathcal{N}|^3),
+\end{equation}
+where the major complexity comes from the updates at line 11: $\beta [A_{i}^k]+ = \pi (A \to B C) \beta[B_i^j] \beta[C_j^k]$.
+
+%To reduce the computation complexity, we need to leverage shared computations arises from the parameterization of rule probabilities $\pi (A \to B C)$. 
+
+If we make the assumption that
+\begin{equation}
+    \pi (A \to B C) = \frac{\phi(A, B) \cdot \mathbf{\psi}(A, C)}{\sum_{B'C'} \phi(A, B') \cdot \psi(A, C')},
+\end{equation}
+where $\phi$ and $\psi$ are feature functions that maps $A, B$ and $A, C$ to vectors of length $r$, then we can calculate line 11 as
+
+\begin{align}
+    \beta [A_{i}^k] & = \sum_{BC}\frac{\phi(A, B) \cdot \mathbf{\psi}(A, C) \beta[B_i^j] \beta[C_j^k]}{\sum_{B'C'} \phi(A, B') \cdot \psi(A, C')} \\
+    &= \frac{(\sum_B \beta[B_i^j] \phi(A, B)) \cdot (\sum_C \mathbf{\psi}(A, C)  \beta[C_j^k])}{(\sum_{B'} \phi(A, B') )\cdot (\sum_{C'}\psi(A, C'))} ,
+\end{align}
+and reduce the total complexity to 
+\begin{equation}
+     O(n^3 |\mathcal{N}|^2 r).
+\end{equation}
+
+Note that the parameterization here is different from \cite{kim2019compound}, where $\pi (A \to B C)$ is parameterized as
+
+\begin{equation}
+    \pi (A \to B C) = \frac{\exp(\mathbf{u}_{BC} \mathbf{w}_A + \mathbf{b}_{BC})}{\sum_{B'C'} \exp(\mathbf{u}_{B'C'} \mathbf{w}_A + \mathbf{b}_{B'C'})},
+\end{equation}
+where $\mathbf{u}_{BC}$ is the embedding vector of $(B, C)$, and $\mathbf{w}_A$ is the embedding vector of $A$.
 
 \section{Application to MRF-LM}
 n-gram potentials (yacine's paper?)
