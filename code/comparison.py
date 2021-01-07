@@ -48,7 +48,9 @@ def report_mse(sample, true, quiet=False):
         print(var)
         print("bias ^ 2")
         print(bias ** 2)
-    print(f"total mse {(bias ** 2 + var).sum()}")
+        print(f"total mse {(bias ** 2 + var).sum():.2f}")
+    else:
+        print(f"bias^2 {(bias ** 2).sum():.2f} var {var.sum():.2f} total mse {(bias ** 2 + var).sum():.2f}")
     #print(f"mean mse {(bias ** 2 + var).mean()}")
 
 def print_comp(num_features, q, k, key):

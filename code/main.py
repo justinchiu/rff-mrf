@@ -161,15 +161,17 @@ def report_train(q, k, proj_fn, L_dL, key, sample=True):
         key_comp = key_train
     print_comp_true(num_features, q_t, k_t, true_attn, key_comp, sample)
 
+    return losses[-32:].mean()#, mse 
+
 
 key_train_init = key
 
 
-def inner(num_features, qk_dim, T):
+def inner(num_features, qk_dim, T, temp_sqrt):
     qk_key = jax.random.PRNGKey(111)
     key1, key2 = jax.random.split(qk_key)
-    q = jax.random.normal(key1, (T, qk_dim))
-    k = jax.random.normal(key2, (T, qk_dim))
+    q = jax.random.normal(key1, (T, qk_dim)) / temp_sqrt
+    k = jax.random.normal(key2, (T, qk_dim)) / temp_sqrt
 
     def proj_fn(shape, key):
         sample_key, norm_key  = jax.random.split(key)
@@ -196,7 +198,8 @@ def inner(num_features, qk_dim, T):
 
             key, key1 = jax.random.split(key_train_init)
             print(f"Normal fit (Sample: {sample_key})")
-            report_train(q, k, proj_fn, L_dL, key1, sample_key)
+            kl_ = report_train(q, k, proj_fn, L_dL, key1, sample_key)
+            print(f"kl {kl_}")
 
             def loss(q, k, attn_dist, proj):
                 qp = renorm(q, 2, axis=-1)
@@ -207,7 +210,8 @@ def inner(num_features, qk_dim, T):
 
             key, key1 = jax.random.split(key_train_init)
             print(f"Projected L2 fit (Sample: {sample_key})")
-            report_train(q, k, proj_fn, L_dL, key1, sample_key)
+            kl_ = report_train(q, k, proj_fn, L_dL, key1, sample_key)
+            print(f"kl {kl_}")
 
             def loss(q, k, attn_dist, proj):
                 qp = jax.lax.clamp(-2., q, 2.)
@@ -218,14 +222,16 @@ def inner(num_features, qk_dim, T):
 
             key, key1 = jax.random.split(key_train_init)
             print(f"Projected Linf fit (Sample: {sample_key})")
-            report_train(q, k, proj_fn, L_dL, key1, sample_key)
+            kl_ = report_train(q, k, proj_fn, L_dL, key1, sample_key)
+            print(f"kl {kl_}")
 
 
 num_features = 256
 qk_dim = 64
 T = 8
 
-for qk_dim in [64, 128]:
-    for T in [8, 32, 128]:
-        print(f"num_features {num_features} qk_dim {qk_dim} T {T}")
-        inner(num_features, qk_dim, T)
+for temp in [1, 1.25, 1.5]:
+    for qk_dim in [64, 128]:
+        for T in [8, 32, 128, 256]:
+            print(f"num_features {num_features} qk_dim {qk_dim} T {T} temp_sqrt {temp}")
+            inner(num_features, qk_dim, T, temp)
