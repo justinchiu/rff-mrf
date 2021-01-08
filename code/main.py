@@ -134,7 +134,7 @@ print("try to fit low entropy distributions")
 num_iters = 2000
 alpha = 0.25
 
-def report_train(q, k, proj_fn, L_dL, key, sample=True):
+def report_train(q, k, proj_fn, L_dL, key, sample=True, title=None):
     vals = jnp.exp(q @ k.T)
     true_attn = vals / vals.sum(-1, keepdims=True)
 
@@ -153,6 +153,7 @@ def report_train(q, k, proj_fn, L_dL, key, sample=True):
             mode = "markers",
         ),
     )
+    fig.update_layout(title = title)
     st.plotly_chart(fig, use_container_width=True)
 
     if sample:
@@ -198,7 +199,8 @@ def inner(num_features, qk_dim, T, temp_sqrt):
 
             key, key1 = jax.random.split(key_train_init)
             print(f"Normal fit (Sample: {sample_key})")
-            kl_ = report_train(q, k, proj_fn, L_dL, key1, sample_key)
+            title = f"KL Normal fit (Sample: {sample_key} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            kl_ = report_train(q, k, proj_fn, L_dL, key1, sample_key, title)
             print(f"kl {kl_}")
 
             def loss(q, k, attn_dist, proj):
@@ -210,7 +212,8 @@ def inner(num_features, qk_dim, T, temp_sqrt):
 
             key, key1 = jax.random.split(key_train_init)
             print(f"Projected L2 fit (Sample: {sample_key})")
-            kl_ = report_train(q, k, proj_fn, L_dL, key1, sample_key)
+            title = f"KL Projected L2 fit (Sample: {sample_key} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            kl_ = report_train(q, k, proj_fn, L_dL, key1, sample_key, title)
             print(f"kl {kl_}")
 
             def loss(q, k, attn_dist, proj):
@@ -222,7 +225,8 @@ def inner(num_features, qk_dim, T, temp_sqrt):
 
             key, key1 = jax.random.split(key_train_init)
             print(f"Projected Linf fit (Sample: {sample_key})")
-            kl_ = report_train(q, k, proj_fn, L_dL, key1, sample_key)
+            title = f"KL Projected Linf fit (Sample: {sample_key} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            kl_ = report_train(q, k, proj_fn, L_dL, key1, sample_key, title)
             print(f"kl {kl_}")
 
 
