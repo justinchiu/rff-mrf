@@ -1,4 +1,4 @@
-\begin{thebibliography}{3}
+\begin{thebibliography}{5}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -12,6 +12,18 @@ Krzysztof Choromanski, Valerii Likhosherstov, David Dohan, Xingyou Song,
   Andreea Gane, Tamas Sarlos, Peter Hawkins, Jared Davis, Afroz Mohiuddin,
   Lukasz Kaiser, David Belanger, Lucy Colwell, and Adrian Weller.
 \newblock Rethinking attention with performers, 2020.
+
+\bibitem[Eisner(2016)]{eisner2016inside}
+Jason Eisner.
+\newblock Inside-outside and forward-backward algorithms are just backprop
+  (tutorial paper).
+\newblock In \emph{Proceedings of the Workshop on Structured Prediction for
+  NLP}, pages 1--17, 2016.
+
+\bibitem[Kim et~al.(2019)Kim, Dyer, and Rush]{kim2019compound}
+Yoon Kim, Chris Dyer, and Alexander~M Rush.
+\newblock Compound probabilistic context-free grammars for grammar induction.
+\newblock \emph{arXiv preprint arXiv:1906.10225}, 2019.
 
 \bibitem[Obermeyer et~al.(2019)Obermeyer, Bingham, Jankowiak, Chiu, Pradhan,
   Rush, and Goodman]{obermeyer2019tve}

@@ -348,8 +348,24 @@ where $\mathbf{u}_{BC}$ is the embedding vector of $(B, C)$, and $\mathbf{w}_A$ 
 n-gram potentials (yacine's paper?)
 loop over different lengths to compute partition fn?
 
-\section{Numerical Stability}
-todo
+\section{Numerical Stability of Linear Kernel}
+Let $\phi(x) = \frac{1}{\sqrt{d}}\exp\left(W^Tx - \frac{\|x\|_2^2}{2}\right)$,
+with $x \in \R^n$ and $W \in \R^{n\times d}$.
+We would like to compute:
+\begin{equation}
+\label{eqn:rff-kernel}
+f(x,y) = \left\langle
+    \phi(x),\phi(y)
+\right\rangle,
+\end{equation}
+with $x,y \in \R^n$.
+\begin{comment}
+The derivative is given by 
+\begin{equation}
+\frac{\partial f(x,y)}{\partial x} = \phi(y) \odot (W^T1 - x)
+\end{equation}
+\end{comment}
+
 
 \bibliographystyle{plainnat}
 \bibliography{bib}
