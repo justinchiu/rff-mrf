@@ -223,7 +223,7 @@ def kl(p, q):
     #e_ratio = jax.ops.index_update(e_ratio, p == 0, 0)
     return e_ratio.sum(-1)
 
-def train(q, k, true_attn, L_dL, proj_fn, alpha, num_iters, key, sample=True):
+def train(q, k, scale, proj, true_attn, L_dL, proj_fn, alpha, num_iters, key, sample=True):
     losses = onp.zeros((num_iters,))
     for i in range(num_iters):
         if sample:
@@ -231,11 +231,27 @@ def train(q, k, true_attn, L_dL, proj_fn, alpha, num_iters, key, sample=True):
         else:
             key_sample = key
         projection_matrix = proj_fn(key_sample)
-        kl_val, (dq, dk) = L_dL(q, k, true_attn, projection_matrix)
+        kl_val, (dq, dk) = L_dL(q, k, projection_matrix, true_attn)
         q -= alpha * dq
         k -= alpha * dk
         losses[i] = kl_val
-    return losses, q, k
+    return losses, q, k, scale, projection_matrix
+
+def train_proj(q, k, scale, proj,
+    true_attn,
+    L_dL,
+    proj_fn_unused,
+    alpha, num_iters, key, sample,
+):
+    losses = onp.zeros((num_iters,))
+    for i in range(num_iters):
+        kl_val, (dq, dk, dscale, dproj) = L_dL(q, k, scale, proj, true_attn)
+        q -= alpha * dq
+        k -= alpha * dk
+        scale -= alpha * dscale
+        proj -= alpha * dproj
+        losses[i] = kl_val
+    return losses, q, k, scale, proj
 
 if __name__ == "__main__":
     onp.set_printoptions(suppress=True, precision=2)
