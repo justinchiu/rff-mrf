@@ -11,7 +11,7 @@ from jax.nn import softmax, log_softmax
 
 import numpy as onp
 
-from utils import renorm
+from utils import renorm, renorm_stopgrad
 
 import fast_attention as fat
 import torch_fast_attention as tfat
@@ -38,40 +38,72 @@ print("try to fit low entropy distributions")
 #num_iters = 2500
 num_iters = 20000
 alpha = 0.25
+#alpha = 0.05
+alpha = 1
 
 gamma = 0.001
 
-def report_train(q, k, proj_fn, L_dL, num_features, key, train_fn, sample=True, title=None):
+def report_train(
+    q, k, proj_fn, L_dL, num_features, key, train_fn, sample=True, title=None,
+    post_renorm=False,
+):
     vals = jnp.exp(q @ k.T)
     true_attn = vals / vals.sum(-1, keepdims=True)
 
     # sample embeddings close to 0 to start
-    key, key_q, key_k, key_p = jax.random.split(key, 4)
+    #key, key_q, key_k, key_pq, key_pk = jax.random.split(key, 5)
+    key, key_q, key_k = jax.random.split(key, 3)
     q_init = jax.random.uniform(key_q, shape=q.shape, minval=-gamma, maxval=gamma)
     k_init = jax.random.uniform(key_k, shape=k.shape, minval=-gamma, maxval=gamma)
 
+    #scale = 1.
+    #scale_q = jax.numpy.ones((num_features, 1))
+    # seed 1
+    #key_pq = jax.random.PRNGKey(1111)
+    # seed 2
+    key_pq = jax.random.PRNGKey(1234)
+    proj_init_q = proj_fn(key_pq)
+
+    #scale_k = jax.numpy.ones((num_features, 1))
+    #proj_init_k = proj_fn(key_pk)
+
     scale = 1.
-    proj_init = proj_fn(key_p)
+    #scale = scale_q
+    proj_init = proj_init_q
 
     key, key_train = jax.random.split(key)
 
-    losses, q_t, k_t, scale, proj = train_fn(
+    losses, grads, q_t, k_t, scale, proj = train_fn(
         q_init.copy(), k_init.copy(),
         scale, proj_init.copy() if proj_init is not None else None,
         true_attn, L_dL, proj_fn,
         alpha, num_iters,
         key_train, sample,
+        post_renorm=post_renorm,
     )
+    #print(scale)
+    #print(proj)
+    #import pdb; pdb.set_trace()
 
     #"""
     fig = go.Figure(
-        data = go.Scatter(
+        data = go.Scattergl(
             x = onp.arange(num_iters),
             y = losses,
             mode = "markers",
         ),
     )
     fig.update_layout(title = title)
+    st.plotly_chart(fig, use_container_width=True)
+
+    fig = go.Figure(
+        data = go.Scattergl(
+            x = onp.arange(num_iters),
+            y = grads,
+            mode = "markers",
+        ),
+    )
+    fig.update_layout(title = f"||GRAD||^2 {title}")
     st.plotly_chart(fig, use_container_width=True)
     #"""
 
@@ -102,6 +134,7 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
     st.write(f"Total entropy of true dist: {-(jnp.exp(log_probs) * log_probs).sum()}")
     st.write(f"Mean entropy of true dist: {-(jnp.exp(log_probs) * log_probs).sum(-1).mean()}")
 
+    #"""
     # fit exp kernel
     def loss(q, k, dummy_proj, attn):
         logits = q @ k.T
@@ -117,6 +150,78 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
         sample=False, title=title,
     )
     print(f"kl {kl_}")
+    #"""
+    #
+    #"""
+    # fit exp kernel fwd renorm
+    def loss(q, k, scale, dummy_proj, attn):
+        logits = renorm(q) @ renorm(k).T
+        probs = softmax(logits)
+        return fat.kl(attn, probs).mean()
+    L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
+
+    key, key1 = jax.random.split(key_train_init)
+    print(f"Softmax fwd renorm fit")
+    title = f"KL softmax fwd renorm fit (S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt})"
+    kl_ = report_train(q, k, lambda x: None, L_dL, num_features, key1,
+        train_fn = fat.train_proj,
+        sample=False, title=title,
+        post_renorm=False,
+    )
+    print(f"kl {kl_}")
+    #"""
+    
+    #"""
+    # fit exp kernel post renorm
+    def loss(q, k, scale, dummy_proj, attn):
+        logits = q @ k.T
+        probs = softmax(logits)
+        return fat.kl(attn, probs).mean()
+    L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
+
+    key, key1 = jax.random.split(key_train_init)
+    print(f"Softmax post renorm fit")
+    title = f"KL softmax post renorm fit (S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt})"
+    kl_ = report_train(q, k, lambda x: None, L_dL, num_features, key1,
+        train_fn = fat.train_proj,
+        sample=False, title=title,
+        post_renorm=True,
+    )
+    print(f"kl {kl_}")
+    #"""
+    #
+    def loss(q, k, scale, dummy_proj, attn):
+        logits = renorm(q) @ renorm(k).T
+        probs = softmax(scale * logits)
+        return fat.kl(attn, probs).mean()
+    L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
+
+    key, key1 = jax.random.split(key_train_init)
+    print(f"Softmax temp fwd renorm fit")
+    title = f"KL softmax temp fwd renorm fit (S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt})"
+    kl_ = report_train(q, k, lambda x: None, L_dL, num_features, key1,
+        train_fn = fat.train_proj,
+        sample=False, title=title,
+        post_renorm=False,
+    )
+    print(f"kl {kl_}")
+    #"""
+    def loss(q, k, scale, dummy_proj, attn):
+        logits = q @ k.T
+        probs = softmax(scale * logits)
+        return fat.kl(attn, probs).mean()
+    L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
+
+    key, key1 = jax.random.split(key_train_init)
+    print(f"Softmax temp post renorm fit")
+    title = f"KL softmax temp post renorm fit (S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt})"
+    kl_ = report_train(q, k, lambda x: None, L_dL, num_features, key1,
+        train_fn = fat.train_proj,
+        sample=False, title=title,
+        post_renorm=True,
+    )
+    print(f"kl {kl_}")
+    #"""
 
     def proj_fn(shape, key):
         sample_key, norm_key  = jax.random.split(key)
@@ -160,26 +265,57 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
             print(f"kl {kl_}")
             #"""
 
-            #"""
-            def loss(q, k, proj, attn_dist):
+            """
+            def loss(q, k, scale, proj, attn_dist):
                 qp = renorm(q, 2, axis=-1)
                 kp = renorm(k, 2, axis=-1)
-                ra, _ = fat.rff_attn(qp, kp, proj)
+                ra, _ = fat.rff_attn(qp, kp, jax.lax.stop_gradient(proj))
                 return fat.kl(attn_dist, ra).mean()
-            L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1)))
+            L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
 
             key, key1 = jax.random.split(key_train_init)
             print(f"Projected L2 fit (Sample: {sample_key})")
             title = f"KL Projected L2 fit (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
             kl_ = report_train(q, k, proj_fn, L_dL, num_features, key1,
-                fat.train, sample_key, title,
+                fat.train_proj, sample_key, title,
+            )
+            print(f"kl {kl_}")
+            """
+
+            def loss(q, k, scale, proj, attn_dist):
+                qp = renorm_stopgrad(q, axis=-1)
+                kp = renorm_stopgrad(k, axis=-1)
+                ra, _ = fat.rff_attn(qp, kp, jax.lax.stop_gradient(proj))
+                return fat.kl(attn_dist, ra).mean()
+            L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
+
+            key, key1 = jax.random.split(key_train_init)
+            print(f"Projected L2 detach fit (Sample: {sample_key})")
+            title = f"KL Projected L2 detach fit (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            kl_ = report_train(q, k, proj_fn, L_dL, num_features, key1,
+                fat.train_proj, sample_key, title,
             )
             print(f"kl {kl_}")
 
+            def loss(q, k, scale, proj, attn_dist):
+                ra, _ = fat.rff_attn(q, k, jax.lax.stop_gradient(proj))
+                return fat.kl(attn_dist, ra).mean()
+            L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
+
+            key, key1 = jax.random.split(key_train_init)
+            print(f"Post projected L2 fit (Sample: {sample_key})")
+            title = f"KL Post projected L2 detach fit (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            kl_ = report_train(q, k, proj_fn, L_dL, num_features, key1,
+                fat.train_proj, sample_key, title,
+                post_renorm=True,
+            )
+            print(f"kl {kl_}")
+
+            """
             # learn scale
             def loss(q, k, scale, proj, attn_dist):
-                qp = renorm(q, 2, axis=-1)
-                kp = renorm(k, 2, axis=-1)
+                qp = renorm(q, axis=-1)
+                kp = renorm(k, axis=-1)
                 ra, _ = fat.rff_attn(qp, kp, scale * jax.lax.stop_gradient(proj))
                 return fat.kl(attn_dist, ra).mean()
             L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
@@ -187,14 +323,36 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
             key, key1 = jax.random.split(key_train_init)
             print(f"Projected L2 fit scale (Sample: {sample_key})")
             title = f"KL Projected L2 fit scale (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
-            kl_ = report_train(q, k, proj_fn, L_dL, num_features, key1,
+            kl_ = report_train(
+                q, k,
+                proj_fn,
+                #proj_fn_norm,
+                L_dL,
+                num_features, key1,
                 fat.train_proj, sample_key, title,
             )
             print(f"kl {kl_}")
+            """
 
+            """
+            key, key1 = jax.random.split(key_train_init)
+            print(f"Projected L2 fit scale projfnreg (Sample: {sample_key})")
+            title = f"KL Projected L2 fit scale projfnreg (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            kl_ = report_train(
+                q, k,
+                #proj_fn,
+                proj_fn_reg,
+                L_dL,
+                num_features, key1,
+                fat.train_proj, sample_key, title,
+            )
+            print(f"kl {kl_}")
+            """
+
+            """
             def loss(q, k, scale, proj, attn_dist):
-                qp = renorm(q, 2, axis=-1)
-                kp = renorm(k, 2, axis=-1)
+                qp = renorm(q, axis=-1)
+                kp = renorm(k, axis=-1)
                 ra, _ = fat.rff_attn(qp, kp, jax.lax.stop_gradient(scale) * proj)
                 return fat.kl(attn_dist, ra).mean()
             L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
@@ -202,31 +360,65 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
             key, key1 = jax.random.split(key_train_init)
             print(f"Projected L2 fit proj (Sample: {sample_key})")
             title = f"KL Projected L2 fit proj (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
-            kl_ = report_train(q, k, proj_fn, L_dL, num_features, key1,
+            kl_ = report_train(
+                q, k,
+                proj_fn,
+                #proj_fn_norm,
+                L_dL, num_features, key1,
                 fat.train_proj, sample_key, title,
             )
             print(f"kl {kl_}")
+            """
 
+            """
             def loss(q, k, scale, proj, attn_dist):
-                qp = renorm(q, 2, axis=-1)
-                kp = renorm(k, 2, axis=-1)
+                qp = renorm(q, axis=-1)
+                kp = renorm(k, axis=-1)
                 ra, _ = fat.rff_attn(qp, kp, scale * proj)
                 return fat.kl(attn_dist, ra).mean()
             L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
 
             key, key1 = jax.random.split(key_train_init)
-            print(f"Projected L2 fit scale proj (Sample: {sample_key})")
-            title = f"KL Projected L2 fit scale proj (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
-            kl_ = report_train(q, k, proj_fn, L_dL, num_features, key1,
+            print(f"Projected L2 fit scale proj projfnreg (Sample: {sample_key})")
+            title = f"KL Projected L2 fit scale projfnreg (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            kl_ = report_train(
+                q, k,
+                #proj_fn,
+                proj_fn_reg,
+                L_dL, num_features, key1,
+                fat.train_proj, sample_key, title,
+            )
+            print(f"kl {kl_}")
+            """
+
+            def loss(q, k, scale, proj, attn_dist):
+                #qp = renorm(q, axis=-1)
+                #kp = renorm(k, axis=-1)
+                qp = q
+                kp = k
+                ra, _ = fat.relu_rff_attn0(qp, kp, jax.lax.stop_gradient(proj))
+                return fat.kl(attn_dist, ra).mean()
+            L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
+
+            key, key1 = jax.random.split(key_train_init)
+            #print(f"Relu Projected L2 fit (Sample: {sample_key})")
+            #title = f"KL Relu Projected L2 fit (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            print(f"Relu fit (Sample: {sample_key})")
+            title = f"KL Relu fit (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            kl_ = report_train(
+                q, k,
+                proj_fn,
+                #proj_fn_norm,
+                L_dL, num_features, key1,
                 fat.train_proj, sample_key, title,
             )
             print(f"kl {kl_}")
 
 
 
-num_features = 256
-num_features = 512
-for num_features in [256, 512]:
+
+#for num_features in [256, 512]:
+for num_features in [256]:
     #for temp in [1, 1.25, 1.5]:
     for temp in [1]:
         #for qk_dim in [64, 128]:

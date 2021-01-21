@@ -28,7 +28,11 @@ import jax.numpy as jnp
 
 from jax.scipy.special import logsumexp as lse
 
+from jax.numpy.linalg import norm
+
 import numpy as onp
+
+from utils import renorm
 
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
@@ -138,6 +142,71 @@ def nonnegative_softmax_kernel_feature_creator0(
 
   return data_dash
 
+def relu_nonnegative_softmax_kernel_feature_creator0(
+    data,
+    projection_matrix,
+    batch_dims_t,
+    precision,
+    is_query,
+    normalize_data=True,
+    eps=0.0001,
+):
+  """Constructs nonnegative kernel features for fast softmax attention.
+
+  Args:
+    data: input for which features are computes
+    projection_matrix: random matrix used to compute features
+    batch_dims_t: tuple of batch dimensions
+    precision: precision parameter
+    is_query: predicate indicating whether input data corresponds to queries or
+      keys
+    normalize_data: predicate indicating whether data should be normalized,
+    eps: numerical stabilizer.
+
+  Returns:
+    Random features for fast softmax attention.
+  """
+  if normalize_data:
+    # We have e^{qk^T/sqrt{d}} = e^{q_norm k_norm^T}, where
+    # w_norm = w * data_normalizer for w in {q,k}.
+    data_normalizer = 1.0 / (jnp.sqrt(jnp.sqrt(data.shape[-1])))
+  else:
+    data_normalizer = 1.0
+  #ratio = 1.0 / jnp.sqrt(projection_matrix.shape[0])
+  ratio = 1.0
+  data_mod_shape = data.shape[0:len(batch_dims_t)] + projection_matrix.shape
+  data_thick_random_matrix = jnp.zeros(data_mod_shape) + projection_matrix
+
+  #"""
+  data_dash = lax.dot_general(
+      data_normalizer * data,
+      data_thick_random_matrix,
+      (((data.ndim - 1,), (data_thick_random_matrix.ndim - 1,)),
+       (batch_dims_t, batch_dims_t)),
+      precision=precision)
+  #"""
+  #data_dash = jnp.einsum("...bd,...fd->...bf", data_normalizer * data, projection_matrix)
+
+  diag_data = jnp.square(data)
+  diag_data = jnp.sum(diag_data, axis=data.ndim - 1)
+  diag_data = (diag_data / 2.0) * data_normalizer * data_normalizer
+  diag_data = jnp.expand_dims(diag_data, axis=data.ndim - 1)
+
+  if is_query:
+    last_dims_t = (len(data_dash.shape) - 1,)
+    data_dash = ratio * (
+        #jnp.exp(
+            #data_dash - diag_data -
+            #jnp.max(data_dash, axis=last_dims_t, keepdims=True)) + eps)
+        jax.nn.relu(data_dash)) + eps
+  else:
+    data_dash = ratio * (
+        #jnp.exp(
+            #data_dash - diag_data - jnp.max(data_dash)) + eps)
+        jax.nn.relu(data_dash)) + eps
+
+  return data_dash
+
 def get_2d_array(unstructured_blocks, key, scaling=0):
     nb_rows, nb_columns = unstructured_blocks.shape
     nb_full_blocks = int(nb_rows / nb_columns)
@@ -157,11 +226,16 @@ def get_2d_array(unstructured_blocks, key, scaling=0):
         multiplier = jnp.linalg.norm(
             random.normal(key, (nb_rows, nb_columns)), axis=1)
     elif scaling == 1:
+        # this is supposed to cancel out the 1 / num_features?
         multiplier = jnp.sqrt(float(nb_columns)) * jnp.ones((nb_rows))
+    elif scaling == 2:
+        # use this since we are not normalizing by 1 / num_features.
+        multiplier = jnp.ones((nb_rows,))
     else:
-        raise ValueError('Scaling must be one of {0, 1}. Was %s' % scaling)
+        raise ValueError('Scaling must be one of {0, 1, 2}. Was %s' % scaling)
 
-    return jnp.matmul(jnp.diag(multiplier), final_matrix)
+    return multiplier[:,None] * final_matrix
+    #return jnp.matmul(jnp.diag(multiplier), final_matrix)
 
 # input: random samples `unstructured_blocks`
 get_2d_arrays = jax.jit(jax.vmap(
@@ -218,13 +292,33 @@ def rff_attn0(q, k, projection_matrix):
 
 rffa0 = jax.jit(rff_attn0)
 
+def relu_rff_attn0(q, k, projection_matrix):
+    kernel_cons = relu_nonnegative_softmax_kernel_feature_creator0
+    phi_q = kernel_cons(
+        q, projection_matrix, (0,), None, is_query=True, eps=0,
+        #normalize_data=True,
+        normalize_data=False,
+    )
+    phi_k = kernel_cons(
+        k, projection_matrix, (0,), None, is_query=False, eps=0,
+        #normalize_data=True,
+        normalize_data=False,
+    )
+    uprobs = phi_q @ phi_k.T
+    return uprobs / uprobs.sum(-1, keepdims=True), None
+
+
 def kl(p, q):
     e_ratio = p * (jnp.log(p) - jnp.log(q))
     #e_ratio = jax.ops.index_update(e_ratio, p == 0, 0)
     return e_ratio.sum(-1)
 
-def train(q, k, scale, proj, true_attn, L_dL, proj_fn, alpha, num_iters, key, sample=True):
+def train(q, k, scale, proj, true_attn, L_dL, proj_fn,
+    alpha, num_iters, key, sample=True,
+    post_renorm=False,
+):
     losses = onp.zeros((num_iters,))
+    grads = onp.zeros((num_iters,))
     for i in range(num_iters):
         if sample:
             key, key_sample = jax.random.split(key)
@@ -235,23 +329,48 @@ def train(q, k, scale, proj, true_attn, L_dL, proj_fn, alpha, num_iters, key, sa
         q -= alpha * dq
         k -= alpha * dk
         losses[i] = kl_val
-    return losses, q, k, scale, projection_matrix
+        grads[i] += norm(dq) ** 2
+        grads[i] += norm(dk) ** 2
+
+        if post_renorm:
+            q = renorm(q)
+            k = renorm(k)
+
+    return losses, grads, q, k, scale, projection_matrix
 
 def train_proj(q, k, scale, proj,
     true_attn,
     L_dL,
     proj_fn_unused,
     alpha, num_iters, key, sample,
+    post_renorm = False,
 ):
     losses = onp.zeros((num_iters,))
+    grads = onp.zeros((num_iters,))
     for i in range(num_iters):
         kl_val, (dq, dk, dscale, dproj) = L_dL(q, k, scale, proj, true_attn)
         q -= alpha * dq
         k -= alpha * dk
-        scale -= alpha * dscale
-        proj -= alpha * dproj
+        if dscale is not None:
+            scale -= alpha * dscale
+        if dproj is not None:
+            proj -= alpha * dproj
+
         losses[i] = kl_val
-    return losses, q, k, scale, proj
+
+        grads[i] += norm(dq) ** 2
+        grads[i] += norm(dk) ** 2
+        if dscale is not None:
+            grads[i] += norm(dscale) ** 2
+        if dproj is not None:
+            grads[i] += norm(dproj) ** 2
+
+        #import pdb; pdb.set_trace()
+        if post_renorm:
+            q = renorm(q)
+            k = renorm(k)
+
+    return losses, grads, q, k, scale, proj
 
 if __name__ == "__main__":
     onp.set_printoptions(suppress=True, precision=2)
