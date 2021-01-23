@@ -250,6 +250,52 @@ def relu_nonnegative_softmax_kernel_feature_creator(
   # instead of adding, try smoothing this way
   return jnp.log(jnp.maximum(data_dash, eps))
 
+def exp_nonnegative_softmax_kernel_feature_creator(
+    data,
+    projection_matrix,
+    batch_dims_t,
+    precision,
+    is_query,
+    normalize_data=False,
+    eps=0.0001,
+):
+  """Constructs nonnegative kernel features for fast softmax attention.
+
+  Args:
+    data: input for which features are computes
+    projection_matrix: random matrix used to compute features
+    batch_dims_t: tuple of batch dimensions
+    precision: precision parameter
+    is_query: predicate indicating whether input data corresponds to queries or
+      keys
+    normalize_data: predicate indicating whether data should be normalized,
+    eps: numerical stabilizer.
+
+  Returns:
+    Random features for fast softmax attention.
+  """
+  if normalize_data:
+    # We have e^{qk^T/sqrt{d}} = e^{q_norm k_norm^T}, where
+    # w_norm = w * data_normalizer for w in {q,k}.
+    data_normalizer = 1.0 / (jnp.sqrt(jnp.sqrt(data.shape[-1])))
+  else:
+    data_normalizer = 1.0
+  #ratio = 1.0 / jnp.sqrt(projection_matrix.shape[0])
+  ratio = 1.0
+  data_mod_shape = data.shape[0:len(batch_dims_t)] + projection_matrix.shape
+  data_thick_random_matrix = jnp.zeros(data_mod_shape) + projection_matrix
+
+  #"""
+  data_dash = lax.dot_general(
+      data_normalizer * data,
+      data_thick_random_matrix,
+      (((data.ndim - 1,), (data_thick_random_matrix.ndim - 1,)),
+       (batch_dims_t, batch_dims_t)),
+      precision=precision)
+  #"""
+  #data_dash = jnp.einsum("...bd,...fd->...bf", data_normalizer * data, projection_matrix)
+  return data_dash
+
 def sincos_nonnegative_softmax_kernel_feature_creator0(
     data,
     projection_matrix,
@@ -417,6 +463,23 @@ def relu_rff_attn0(q, k, projection_matrix):
 
 def relu_rff_attn(q, k, projection_matrix):
     kernel_cons = relu_nonnegative_softmax_kernel_feature_creator
+    log_phi_q = kernel_cons(
+        q, projection_matrix, (0,), None, is_query=True, eps=.0001,
+        #normalize_data=True,
+        normalize_data=False,
+    )
+    log_phi_k = kernel_cons(
+        k, projection_matrix, (0,), None, is_query=False, eps=.0001,
+        #normalize_data=True,
+        normalize_data=False,
+    )
+    log_pots_hat = log_phi_q[:,None,:] + log_phi_k[None,:,:]
+    # average
+    log_pots = lmm(log_phi_q, log_phi_k)
+    return jnp.exp(log_pots - lse(log_pots, -1, keepdims=True)), log_pots_hat
+
+def exp_rff_attn(q, k, projection_matrix):
+    kernel_cons = exp_nonnegative_softmax_kernel_feature_creator
     log_phi_q = kernel_cons(
         q, projection_matrix, (0,), None, is_query=True, eps=.0001,
         #normalize_data=True,

@@ -38,7 +38,7 @@ print("try to fit low entropy distributions")
 num_iters = 2500
 #num_iters = 5000
 num_iters = 10000
-num_iters = 20000
+#num_iters = 20000
 #alpha = 0.25
 #alpha = 0.05
 alpha = 1.
@@ -269,6 +269,13 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
         return projection_matrix
     proj_fn_reg = functools.partial(proj_fn_reg, (num_features, qk_dim))
 
+    def proj_fn_reg_small(shape, key):
+        sample_key, norm_key  = jax.random.split(key)
+        gaussian_sample = fat.random_projection(num_features, qk_dim, sample_key)
+        projection_matrix = fat.get_2d_array(gaussian_sample, norm_key, scaling=2)
+        return projection_matrix
+    proj_fn_reg_small = functools.partial(proj_fn_reg_small, (num_features, qk_dim))
+
     #for sample_key in [True, False]:
     for sample_key in [False]:
         #for proj_fn in [proj_fn, proj_fn_reg]:
@@ -324,7 +331,7 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
             print(f"kl {kl_}")
             """
 
-            #"""
+            """
             def loss(q, k, scale, proj, attn_dist):
                 ra, _ = fat.rff_attn(q, k, jax.lax.stop_gradient(proj))
                 return fat.kl(attn_dist, ra).mean()
@@ -338,7 +345,7 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
                 post_renorm=True,
             )
             print(f"kl {kl_}")
-            #"""
+            """
 
             #"""
             # learn scale
@@ -405,7 +412,7 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
             print(f"kl {kl_}")
             """
 
-            #"""
+            """
             def loss(q, k, scale, proj, attn_dist):
                 qp = q
                 kp = k
@@ -419,6 +426,28 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
             #title = f"KL Relu0 Projected L2 fit (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
             print(f"Relu0 fit (Sample: {sample_key})")
             title = f"KL Relu0 fit (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            kl_ = report_train(
+                q, k,
+                #proj_fn,
+                #proj_fn_gaus,
+                proj_fn_reg,
+                L_dL, num_features, key1,
+                fat.train_proj, sample_key, title,
+            )
+            print(f"kl {kl_}")
+            """
+            #"""
+            def loss(q, k, scale, proj, attn_dist):
+                qp = q
+                kp = k
+                ra, _ = fat.exp_rff_attn(qp, kp, jax.lax.stop_gradient(proj))
+                return fat.kl(attn_dist, ra).mean()
+            L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
+            #L_dL = jax.value_and_grad(loss, argnums=(0, 1, 2, 3)
+
+            key, key1 = jax.random.split(key_train_init)
+            print(f"Exp fit (Sample: {sample_key})")
+            title = f"KL Exp fit (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
             kl_ = report_train(
                 q, k,
                 #proj_fn,
@@ -454,6 +483,31 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
             )
             print(f"kl {kl_}")
             #"""
+            #"""
+            def loss(q, k, scale, proj, attn_dist):
+                qp = q
+                kp = k
+                ra, _ = fat.relu_rff_attn(qp, kp, jax.lax.stop_gradient(proj))
+                return fat.kl(attn_dist, ra).mean()
+            L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
+            #L_dL = jax.value_and_grad(loss, argnums=(0, 1, 2, 3)
+
+            key, key1 = jax.random.split(key_train_init)
+            #print(f"Relu Projected L2 fit (Sample: {sample_key})")
+            #title = f"KL Relu Projected L2 fit (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            print(f"Relu fit small (Sample: {sample_key})")
+            title = f"KL Relu fit small (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            kl_ = report_train(
+                q, k,
+                #proj_fn,
+                #proj_fn_gaus,
+                proj_fn_reg_small,
+                L_dL, num_features, key1,
+                fat.train_proj, sample_key, title,
+            )
+            print(f"kl {kl_}")
+            #"""
+            #
             #
             #"""
             def loss(q, k, scale, proj, attn_dist):
@@ -467,8 +521,59 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
             key, key1 = jax.random.split(key_train_init)
             #print(f"Relu Projected L2 fit (Sample: {sample_key})")
             #title = f"KL Relu Projected L2 fit (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
-            print(f"Relu fit proj (Sample: {sample_key})")
+            print(f"Relu fit small proj (Sample: {sample_key})")
             title = f"KL Relu fit proj (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            kl_ = report_train(
+                q, k,
+                #proj_fn,
+                #proj_fn_gaus,
+                proj_fn_reg_small,
+                L_dL, num_features, key1,
+                fat.train_proj, sample_key, title,
+            )
+            print(f"kl {kl_}")
+            #"""
+            #
+            #"""
+            def loss(q, k, scale, proj, attn_dist):
+                qp = q
+                kp = k
+                ra, _ = fat.relu_rff_attn(qp, kp, scale * proj)
+                return fat.kl(attn_dist, ra).mean()
+            L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
+            #L_dL = jax.value_and_grad(loss, argnums=(0, 1, 2, 3)
+
+            key, key1 = jax.random.split(key_train_init)
+            #print(f"Relu Projected L2 fit (Sample: {sample_key})")
+            #title = f"KL Relu Projected L2 fit (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            print(f"Relu fit small proj (Sample: {sample_key})")
+            title = f"KL Relu fit small proj scale (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            kl_ = report_train(
+                q, k,
+                #proj_fn,
+                #proj_fn_gaus,
+                proj_fn_reg_small,
+                L_dL, num_features, key1,
+                fat.train_proj, sample_key, title,
+            )
+            print(f"kl {kl_}")
+            #"""
+
+            """
+            # bad
+            def loss(q, k, scale, proj, attn_dist):
+                qp = renorm(q)
+                kp = renorm(k)
+                ra, _ = fat.relu_rff_attn(qp, kp, proj)
+                return fat.kl(attn_dist, ra).mean()
+            L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
+            #L_dL = jax.value_and_grad(loss, argnums=(0, 1, 2, 3)
+
+            key, key1 = jax.random.split(key_train_init)
+            #print(f"Relu Projected L2 fit (Sample: {sample_key})")
+            #title = f"KL Relu Projected L2 fit (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            print(f"Relu projected fit proj (Sample: {sample_key})")
+            title = f"KL Relu projected fit proj (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
             kl_ = report_train(
                 q, k,
                 #proj_fn,
@@ -478,7 +583,7 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
                 fat.train_proj, sample_key, title,
             )
             print(f"kl {kl_}")
-            #"""
+            """
 
             """
             def loss(q, k, scale, proj, attn_dist):
@@ -512,7 +617,7 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
 
 
 #for num_features in [256, 512]:
-for num_features in [512]:
+for num_features in [256]:
     #for temp in [1, 1.25, 1.5]:
     for temp in [1]:
         #for qk_dim in [64, 128]:
