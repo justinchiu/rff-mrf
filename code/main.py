@@ -36,12 +36,12 @@ print("try to fit low entropy distributions")
 
 #num_iters = 1250
 num_iters = 2500
-#num_iters = 5000
-num_iters = 10000
+num_iters = 5000
+#num_iters = 10000
 #num_iters = 20000
 #alpha = 0.25
 #alpha = 0.05
-alpha = 1.
+alpha = 2.
 
 gamma = 0.001
 
@@ -483,6 +483,32 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
             )
             print(f"kl {kl_}")
             #"""
+            #
+            #
+            #"""
+            def loss(q, k, scale, proj, attn_dist):
+                qp = q
+                kp = k
+                ra, _ = fat.relu_rff_attn(qp, kp, proj)
+                return fat.kl(attn_dist, ra).mean()
+            L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
+            #L_dL = jax.value_and_grad(loss, argnums=(0, 1, 2, 3)
+
+            key, key1 = jax.random.split(key_train_init)
+            print(f"Relu fit proj (Sample: {sample_key})")
+            title = f"KL Relu fit proj (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            kl_ = report_train(
+                q, k,
+                #proj_fn,
+                #proj_fn_gaus,
+                proj_fn_reg,
+                L_dL, num_features, key1,
+                fat.train_proj, sample_key, title,
+            )
+            print(f"kl {kl_}")
+            #"""
+            #
+            #
             #"""
             def loss(q, k, scale, proj, attn_dist):
                 qp = q
@@ -544,8 +570,6 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
             #L_dL = jax.value_and_grad(loss, argnums=(0, 1, 2, 3)
 
             key, key1 = jax.random.split(key_train_init)
-            #print(f"Relu Projected L2 fit (Sample: {sample_key})")
-            #title = f"KL Relu Projected L2 fit (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
             print(f"Relu fit small proj (Sample: {sample_key})")
             title = f"KL Relu fit small proj scale (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
             kl_ = report_train(

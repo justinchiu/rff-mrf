@@ -134,7 +134,7 @@ a linear-chain MRF plus some scaling terms:
 p(x)
 &= \sum_{z_1} p(z_1 \mid z_0)p(x_1 \mid z_1)  \sum_{z_2} p(z_2 \mid z_1)p(x_2 \mid z_2)\\
 &= \sum_{z_1} \frac{\phi(\bz_0)^T\phi(\bz_1)}{\sum_{z_1'}\phi(\bz_0)^T\phi(\bz'_1)}
-\frac{\phi(\bz_z)^T\phi(\bx_1)}{\sum_{x_1}\phi(\bz_1)^T\phi(\bx_1)}
+\frac{\phi(\bz_1)^T\phi(\bx_1)}{\sum_{x_1}\phi(\bz_1)^T\phi(\bx_1)}
 \sum_{z_2} \frac{\phi(\bz_1)^T\phi(\bz_2)}{\sum_{z_2'}\phi(\bz_1)^T\phi(\bz_2')}
 \frac{\phi(\bz_2)^T\phi(\bx_2)}{\sum_{x_2}\phi(\bz_2)^T\phi(\bx_2)}\\
 %&= \sum_{z_1} \frac{\phi(\bz_0)^T\phi(\bz_1)}{\phi(\bz_0)^T\sum_{z_1'}\phi(\bz'_1)}
@@ -157,6 +157,32 @@ p(x)
 \end{aligned}
 \end{equation}
 
+In the above equation, we applied the RFF trick to both the transitions and emissions.
+The trick also results in a speedup of the same order of magnitude when
+applied only to the transition.
+
+\begin{equation}
+\begin{aligned}
+p(x)
+&= \sum_{z_1} p(z_1 \mid z_0)p(x_1 \mid z_1)  \sum_{z_2} p(z_2 \mid z_1)p(x_2 \mid z_2)\\
+&= \sum_{z_1} \frac{\phi(\bw_{z_0})^T\phi(\bu_{z_1})}{\sum_{z_1'}\phi(\bw_{z_0})^T\phi(\bu_{z'_1})}
+p(x_1 \mid z_1)
+\sum_{z_2} \frac{\phi(\bw_{z_1})^T\phi(\bu_{z_2})}{\sum_{z_2'}\phi(\bw_{z_1})^T\phi(\bu_{z_2'})}
+p(x_2 \mid z_2)\\
+&= \left(\frac{\phi(\bw_{z_0})^T}{\phi(\bw_{z_0})^T\sum_{z_1'}\phi(\bu_{z'_1})}\right)
+\left(
+\sum_{z_1} 
+\frac{p\left(x_1 \mid z_1\right)\phi(\bu_{z_1})\phi(\bw_{z_1})^T}
+{
+    \phi(\bw_{z_1})^T\sum_{z_2'}\phi(\bu_{z_2'})
+}
+\right)
+\left(
+\sum_{z_2} 
+p\left(x_2 \mid z_2\right)\phi(\bu_{z_2})
+\right).
+\end{aligned}
+\end{equation}
 
 \section{Tree MRFs}
 We proceed from first order linear-chain MRFs, where nodes only have 2 neighbours,
