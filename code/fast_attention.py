@@ -364,15 +364,38 @@ def get_2d_array(unstructured_blocks, key, scaling=0):
     nb_rows, nb_columns = unstructured_blocks.shape
     nb_full_blocks = int(nb_rows / nb_columns)
 
+    block_list = []
+    rng = key
+    for _ in range(nb_full_blocks):
+      rng, rng_input = jax.random.split(rng)
+      unstructured_block = random.normal(rng_input,
+                                         (nb_columns, nb_columns))
+      q, _ = jnp.linalg.qr(unstructured_block)
+      q = jnp.transpose(q)
+      block_list.append(q)
+    remaining_rows = nb_rows - nb_full_blocks * nb_columns
+    if remaining_rows > 0:
+      rng, rng_input = jax.random.split(rng)
+      unstructured_block = random.normal(rng_input,
+                                         (nb_columns, nb_columns))
+      q, _ = jnp.linalg.qr(unstructured_block)
+      q = jnp.transpose(q)
+      block_list.append(q[0:remaining_rows])
+    final_matrix = jnp.vstack(block_list)
+
+    """
     remaining_rows = nb_rows - nb_full_blocks * nb_columns
     if remaining_rows > 0:
         raise ValueError("Assert nb_rows % nb_columns == 0 for simplicity")
         # if want to change this take a look at the garbage in fast_attention.py
         # from https://github.com/google-research/google-research/blob/master/performer/fast_attention/jax/fast_attention.py
+    """
 
+    """
     blocks = unstructured_blocks.reshape((nb_full_blocks, nb_columns, nb_columns))
     Q, _ = jnp.linalg.qr(blocks)
     final_matrix = Q.transpose((0, 2, 1)).reshape(-1, nb_columns)
+    """
 
     # scales matrix back after QR
     if scaling == 0:

@@ -458,6 +458,28 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
             )
             print(f"kl {kl_}")
             #"""
+            #"""
+            def loss(q, k, scale, proj, attn_dist):
+                qp = q
+                kp = k
+                ra, _ = fat.exp_rff_attn(qp, kp, proj)
+                return fat.kl(attn_dist, ra).mean()
+            L_dL = jax.jit(jax.value_and_grad(loss, argnums=(0, 1, 2, 3)))
+            #L_dL = jax.value_and_grad(loss, argnums=(0, 1, 2, 3)
+
+            key, key1 = jax.random.split(key_train_init)
+            print(f"Exp fit proj (Sample: {sample_key})")
+            title = f"KL Exp fit proj (Sample: {sample_key} S: {S} T: {T} dim: {qk_dim} temp: {temp_sqrt} numfeat: {num_features})"
+            kl_ = report_train(
+                q, k,
+                #proj_fn,
+                #proj_fn_gaus,
+                proj_fn_reg,
+                L_dL, num_features, key1,
+                fat.train_proj, sample_key, title,
+            )
+            print(f"kl {kl_}")
+            #"""
             #
             #"""
             def loss(q, k, scale, proj, attn_dist):
@@ -641,7 +663,8 @@ def inner(num_features, qk_dim, S, T, temp_sqrt):
 
 
 #for num_features in [256, 512]:
-for num_features in [256]:
+#for num_features in [256]:
+for num_features in [128]:
     #for temp in [1, 1.25, 1.5]:
     for temp in [1]:
         #for qk_dim in [64, 128]:
